@@ -16,7 +16,7 @@ import { AppMenuitem } from './app.menuitem';
                 <li class="menu-separator"></li>
             }
         }
-    </ul> `,
+    </ul> `
 })
 export class AppMenu {
     model: MenuItem[] = [];
@@ -28,8 +28,19 @@ export class AppMenu {
                 items: [
                     { label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/dashboard'] },
                     { label: 'Clientes', icon: 'pi pi-fw pi-users', routerLink: ['/customers'] },
-                    { label: 'Productos', icon: 'pi pi-fw pi-shopping-bag', routerLink: ['/products'] },
                     { label: 'Órdenes', icon: 'pi pi-fw pi-shopping-cart', routerLink: ['/orders'] }
+                ]
+            },
+            {
+                label: 'Catálogo',
+                icon: 'pi pi-fw pi-shopping-bag',
+                path: '/products',
+                items: [
+                    { label: 'Productos', icon: 'pi pi-fw pi-list', routerLink: ['/products/list'] },
+                    // { label: 'Nuevo Producto', icon: 'pi pi-fw pi-plus', routerLink: ['/products/new'] },
+                    { label: 'Categorías', icon: 'pi pi-fw pi-sitemap', routerLink: ['/products/categories'] },
+                    { label: 'Atributos', icon: 'pi pi-fw pi-sliders-h', routerLink: ['/products/attributes'] },
+                    { label: 'Sellos', icon: 'pi pi-fw pi-star', routerLink: ['/products/attributions'] }
                 ]
             },
             {

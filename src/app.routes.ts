@@ -5,18 +5,18 @@ import { Documentation } from './app/pages/documentation/documentation';
 import { Landing } from './app/pages/landing/landing';
 import { Notfound } from './app/pages/notfound/notfound';
 
-import { authGuard }  from './app/core/auth/auth.guard';
+import { authGuard } from './app/core/auth/auth.guard';
 import { guestGuard } from './app/core/auth/guest.guard';
 
 export const appRoutes: Routes = [
     {
         path: 'auth',
         canActivate: [guestGuard],
-        loadChildren: () => import('./app/pages/auth/auth.routes').then(m => m.default),
+        loadChildren: () => import('./app/pages/auth/auth.routes').then((m) => m.default)
     },
 
-    { path: 'landing',   component: Landing },
-    { path: 'notfound',  component: Notfound },
+    { path: 'landing', component: Landing },
+    { path: 'notfound', component: Notfound },
 
     {
         path: '',
@@ -24,11 +24,12 @@ export const appRoutes: Routes = [
         canActivate: [authGuard],
         children: [
             { path: '', component: Dashboard },
-            { path: 'uikit',         loadChildren: () => import('./app/pages/uikit/uikit.routes').then(m => m.default) },
+            { path: 'uikit', loadChildren: () => import('./app/pages/uikit/uikit.routes').then((m) => m.default) },
+            { path: 'products', loadChildren: () => import('./app/pages/products/products.routes').then((m) => m.default) },
             { path: 'documentation', component: Documentation },
-            { path: 'pages',         loadChildren: () => import('./app/pages/pages.routes').then(m => m.default) },
-        ],
+            { path: 'pages', loadChildren: () => import('./app/pages/pages.routes').then((m) => m.default) }
+        ]
     },
 
-    { path: '**', redirectTo: '/notfound' },
+    { path: '**', redirectTo: '/notfound' }
 ];

@@ -1,8 +1,9 @@
-import { Component, input, output, TemplateRef } from '@angular/core';
+import { Component, input, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
+import { ToolbarModule } from 'primeng/toolbar';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 
@@ -15,9 +16,15 @@ export interface TableColumn {
 @Component({
     selector: 'app-data-table',
     standalone: true,
-    imports: [CommonModule, TableModule, InputTextModule, ButtonModule, IconFieldModule, InputIconModule],
+    imports: [CommonModule, TableModule, InputTextModule, ButtonModule, ToolbarModule, IconFieldModule, InputIconModule],
     template: `
-        <div class="card">
+        <p-toolbar styleClass="mb-6">
+            <ng-template #start>
+                <ng-container *ngTemplateOutlet="toolbarActions() ?? null" />
+            </ng-template>
+        </p-toolbar>
+
+        <div class="card p-0!">
             <p-table
                 #dt
                 [value]="data()"
@@ -31,16 +38,11 @@ export interface TableColumn {
                 [showCurrentPageReport]="true"
             >
                 <ng-template pTemplate="caption">
-                    <div class="flex items-center justify-between">
-                        <h5 class="m-0 text-xl font-semibold">{{ title() }}</h5>
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <h5 class="m-0 text-lg font-semibold text-surface-900 dark:text-surface-0">{{ title() }}</h5>
                         <p-iconField iconPosition="left">
                             <p-inputIcon styleClass="pi pi-search" />
-                            <input 
-                                pInputText 
-                                type="text" 
-                                (input)="dt.filterGlobal($any($event.target).value, 'contains')" 
-                                placeholder="Buscar..." 
-                            />
+                            <input pInputText type="text" (input)="dt.filterGlobal($any($event.target).value, 'contains')" placeholder="Buscar..." />
                         </p-iconField>
                     </div>
                 </ng-template>
@@ -68,9 +70,7 @@ export interface TableColumn {
                         }
                         @if (actionsTemplate()) {
                             <td class="text-center">
-                                <ng-container 
-                                    *ngTemplateOutlet="actionsTemplate()!; context: { $implicit: rowData }">
-                                </ng-container>
+                                <ng-container *ngTemplateOutlet="actionsTemplate()!; context: { $implicit: rowData }"> </ng-container>
                             </td>
                         }
                     </tr>
@@ -78,9 +78,7 @@ export interface TableColumn {
 
                 <ng-template pTemplate="emptymessage">
                     <tr>
-                        <td [attr.colspan]="columns().length + (actionsTemplate() ? 1 : 0)" class="text-center p-4 text-muted-color">
-                            No se encontraron registros.
-                        </td>
+                        <td [attr.colspan]="columns().length + (actionsTemplate() ? 1 : 0)" class="text-center p-4 text-muted-color">No se encontraron registros.</td>
                     </tr>
                 </ng-template>
             </p-table>
@@ -95,4 +93,5 @@ export class DataTableComponent {
     rows = input<number>(10);
     paginator = input<boolean>(true);
     actionsTemplate = input<TemplateRef<any> | null>(null);
+    toolbarActions = input<TemplateRef<any> | null>(null);
 }
