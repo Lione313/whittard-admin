@@ -44,6 +44,10 @@ export function isImageUrl(url: string | null): boolean {
     return /\.(jpg|jpeg|png|webp|gif|svg|avif)$/.test(clean);
 }
 
+export function hideBrokenImage(event: Event): void {
+    (event.target as HTMLImageElement).style.display = 'none';
+}
+
 export function formatFileSize(bytes: number): string {
     if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
     if (bytes >= 1024) return `${(bytes / 1024).toFixed(0)}KB`;

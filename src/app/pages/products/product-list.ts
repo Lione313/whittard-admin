@@ -73,8 +73,6 @@ import { formatApiError } from '@/app/shared/utils/api-error';
                 [tableStyle]="{ 'min-width': '70rem' }"
                 [rowHover]="true"
                 dataKey="id"
-                [sortField]="sortField()"
-                [sortOrder]="sortOrder()"
                 currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} productos"
                 [showCurrentPageReport]="true"
                 (onLazyLoad)="load($event)"
@@ -106,14 +104,8 @@ import { formatApiError } from '@/app/shared/utils/api-error';
                         <th style="min-width: 8rem">Estado</th>
                         <th style="min-width: 6rem">Variantes</th>
                         <th style="min-width: 9rem">Precio</th>
-                        <th pSortableColumn="created_at" style="min-width: 10rem">
-                            Creado
-                            <p-sortIcon field="created_at" />
-                        </th>
-                        <th pSortableColumn="updated_at" style="min-width: 10rem">
-                            Actualizado
-                            <p-sortIcon field="updated_at" />
-                        </th>
+                        <th style="min-width: 10rem">Creado</th>
+                        <th style="min-width: 10rem">Actualizado</th>
                         <th style="min-width: 8rem"></th>
                     </tr>
                 </ng-template>
@@ -149,7 +141,7 @@ import { formatApiError } from '@/app/shared/utils/api-error';
                         </td>
                         <td>{{ product.created_at | date: 'dd/MM/yyyy HH:mm' }}</td>
                         <td>{{ product.updated_at | date: 'dd/MM/yyyy HH:mm' }}</td>
-                        <td>
+                        <td class="flex items-center gap-2.5">
                             <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" [raised]="true" severity="secondary" (onClick)="editProduct(product)" />
                             <p-button icon="pi pi-trash" [rounded]="true" [text]="true" [raised]="true" severity="danger" (onClick)="deleteProduct(product)" />
                         </td>
@@ -169,7 +161,12 @@ import { formatApiError } from '@/app/shared/utils/api-error';
 
                 <ng-template #emptymessage>
                     <tr>
-                        <td colspan="9" class="text-center p-8 text-muted-color">No se encontraron productos.</td>
+                        <td colspan="9" class="text-center p-16">
+                            <div class="flex flex-col items-center justify-center gap-2 text-muted-color">
+                                <i class="pi pi-box text-3xl"></i>
+                                <span>No se encontraron productos.</span>
+                            </div>
+                        </td>
                     </tr>
                 </ng-template>
             </p-table>
@@ -264,36 +261,6 @@ import { formatApiError } from '@/app/shared/utils/api-error';
             </ng-template>
         </p-dialog>
 
-        <p-dialog [visible]="productTypeDialogVisible()" (visibleChange)="productTypeDialogVisible.set($event)" [modal]="true" header="Nuevo Producto" [style]="{ width: '520px' }">
-            <ng-template #content>
-                <div class="flex flex-col gap-3">
-                    <p class="m-0 text-sm text-muted-color mb-1">Elige el tipo de producto que quieres crear.</p>
-                    <button
-                        type="button"
-                        (click)="startNewProduct('simple')"
-                        class="w-full text-left flex items-start gap-3 p-4 rounded-xl border border-surface-200 dark:border-surface-700 hover:border-primary hover:bg-surface-50 dark:hover:bg-surface-900 transition-colors cursor-pointer"
-                    >
-                        <i class="pi pi-tag text-2xl text-primary mt-1"></i>
-                        <span class="flex flex-col gap-0.5">
-                            <span class="font-semibold text-surface-900 dark:text-surface-0">Producto simple</span>
-                            <span class="text-sm text-muted-color">Una sola variante, sin atributos ni variaciones.</span>
-                        </span>
-                    </button>
-                    <button
-                        type="button"
-                        (click)="startNewProduct('variable')"
-                        class="w-full text-left flex items-start gap-3 p-4 rounded-xl border border-surface-200 dark:border-surface-700 hover:border-primary hover:bg-surface-50 dark:hover:bg-surface-900 transition-colors cursor-pointer"
-                    >
-                        <i class="pi pi-sliders-h text-2xl text-primary mt-1"></i>
-                        <span class="flex flex-col gap-0.5">
-                            <span class="font-semibold text-surface-900 dark:text-surface-0">Producto variable</span>
-                            <span class="text-sm text-muted-color">Varias variantes combinando atributos.</span>
-                        </span>
-                    </button>
-                </div>
-            </ng-template>
-        </p-dialog>
-
         <app-product-import-guide [visible]="importGuideVisible()" (visibleChange)="importGuideVisible.set($event)" />
 
         <app-confirm-dialog />
@@ -319,7 +286,6 @@ export class ProductList implements OnInit, OnDestroy {
     loaded = this.state.loaded;
 
     loading = signal(false);
-    productTypeDialogVisible = signal(false);
     importGuideVisible = signal(false);
     exporting = signal(false);
     validating = signal(false);
@@ -363,9 +329,6 @@ export class ProductList implements OnInit, OnDestroy {
         }
     }
 
-    sortField = signal<string>('created_at');
-    sortOrder = signal<1 | -1>(-1);
-
     statusOptions: { label: string; value: ProductStatus }[] = [
         { label: 'Borrador', value: 'draft' },
         { label: 'Publicado', value: 'published' },
@@ -393,6 +356,8 @@ export class ProductList implements OnInit, OnDestroy {
         let sort: string | undefined;
         if (event.sortField && typeof event.sortField === 'string') {
             sort = (event.sortOrder === -1 ? '-' : '') + event.sortField;
+        } else {
+            sort = '-created_at';
         }
 
         this.productService
@@ -434,12 +399,7 @@ export class ProductList implements OnInit, OnDestroy {
     }
 
     createProduct() {
-        this.productTypeDialogVisible.set(true);
-    }
-
-    startNewProduct(type: 'simple' | 'variable') {
-        this.productTypeDialogVisible.set(false);
-        this.router.navigate(['/products/new'], { queryParams: { type } });
+        this.router.navigate(['/products/new']);
     }
 
     exportProducts() {
