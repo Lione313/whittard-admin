@@ -26,6 +26,10 @@ export const appRoutes: Routes = [
             { path: '', component: Dashboard },
             { path: 'uikit', loadChildren: () => import('./app/pages/uikit/uikit.routes').then((m) => m.default) },
             { path: 'products', loadChildren: () => import('./app/pages/products/products.routes').then((m) => m.default) },
+            { 
+                path: 'content-general', 
+                loadChildren: () => import('./app/pages/content-general/content-general.routes').then((m) => m.default) 
+            },
             { path: 'customers', loadChildren: () => import('./app/pages/customers/customers.routes').then((m) => m.default) },
             { path: 'coupons', loadChildren: () => import('./app/pages/coupons/coupons.routes').then((m) => m.default) },
             { path: 'inventory', loadChildren: () => import('./app/pages/inventory/inventory.routes').then((m) => m.default) },

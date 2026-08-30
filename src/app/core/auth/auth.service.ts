@@ -1,16 +1,13 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { ApiService } from '../services/api.service';
 import { User } from '../models/user.model';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, catchError, of, map } from 'rxjs';
 import { Router } from '@angular/router';
 
 interface LaravelAuthWrapper {
     success: boolean;
     message: string;
     data: {
-        access_token: string; // ← era "token", la API devuelve "access_token"
-        refresh_token: string;
-        token_type: string;
         user: User;
     };
 }
@@ -22,22 +19,39 @@ export class AuthService {
     private api = inject(ApiService);
     private router = inject(Router);
 
-    private readonly TOKEN_KEY = 'whittard_access_token';
     private readonly USER_KEY = 'whittard_user';
 
     private _user = signal<User | null>(this.getStoredUser());
-    private _accessToken = signal<string | null>(localStorage.getItem(this.TOKEN_KEY));
 
     public user = this._user.asReadonly();
-    public accessToken = this._accessToken.asReadonly();
-    public isLoggedIn = computed(() => !!this._accessToken());
+    public isLoggedIn = computed(() => !!this._user());
 
     login(credentials: { email: string; password: string }): Observable<LaravelAuthWrapper> {
         return this.api.post<LaravelAuthWrapper>('v1/admin/auth/login', credentials).pipe(
             tap((response) => {
-                if (response?.data) {
-                    this.setSession(response.data.access_token, response.data.user);
+                if (response?.data?.user) {
+                    this.setSession(response.data.user);
                 }
+            })
+        );
+    }
+
+    /**
+     * Intenta refrescar la sesión usando la cookie 'refresh_token' enviada por el navegador.
+     * Si es exitoso, recupera los datos del usuario.
+     */
+    refreshToken(): Observable<boolean> {
+        return this.api.post<LaravelAuthWrapper>('v1/admin/auth/refresh', {}).pipe(
+            map((response) => {
+                if (response?.data?.user) {
+                    this.setSession(response.data.user);
+                    return true;
+                }
+                return false;
+            }),
+            catchError(() => {
+                this.clearSession();
+                return of(false);
             })
         );
     }
@@ -49,17 +63,13 @@ export class AuthService {
         });
     }
 
-    private setSession(token: string, user: User): void {
-        localStorage.setItem(this.TOKEN_KEY, token);
+    private setSession(user: User): void {
         localStorage.setItem(this.USER_KEY, JSON.stringify(user));
-        this._accessToken.set(token);
         this._user.set(user);
     }
 
     public clearSession(): void {
-        localStorage.removeItem(this.TOKEN_KEY);
         localStorage.removeItem(this.USER_KEY);
-        this._accessToken.set(null);
         this._user.set(null);
         this.router.navigate(['/auth/login']);
     }

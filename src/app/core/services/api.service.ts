@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { environment } from '../../../environments/environment.development';
 
 @Injectable({
     providedIn: 'root'
@@ -28,5 +28,15 @@ export class ApiService {
 
     delete<T>(path: string, body?: unknown): Observable<T> {
         return this.http.delete<T>(`${this.baseUrl}/${path}`, body !== undefined ? { body } : undefined);
+    }
+
+    
+    postForm<T>(path: string, formData: FormData): Observable<T> {
+        return this.http.post<T>(`${this.baseUrl}/${path}`, formData);
+    }
+
+    putForm<T>(path: string, formData: FormData): Observable<T> {
+        formData.append('_method', 'PUT');
+        return this.http.post<T>(`${this.baseUrl}/${path}`, formData);
     }
 }

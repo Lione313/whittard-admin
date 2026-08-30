@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-
 import { RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { AppMenuitem } from './app.menuitem';
@@ -16,7 +15,7 @@ import { AppMenuitem } from './app.menuitem';
                 <li class="menu-separator"></li>
             }
         }
-    </ul> `
+    </ul>`
 })
 export class AppMenu implements OnInit {
     model: MenuItem[] = [];
@@ -24,11 +23,13 @@ export class AppMenu implements OnInit {
     ngOnInit() {
         this.model = [
             {
-                label: 'Home',
+                label: 'Administrador',
                 items: [
-                    { label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/dashboard'] },
+                    { label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/'] },
                     { label: 'Clientes', icon: 'pi pi-fw pi-users', routerLink: ['/customers'] },
-                    { label: 'Órdenes', icon: 'pi pi-fw pi-shopping-cart', routerLink: ['/orders'] }
+                    { label: 'Órdenes', icon: 'pi pi-fw pi-shopping-cart', routerLink: ['/orders'] },
+                    { label: 'Contenido General', icon: 'pi pi-fw pi-file-edit', routerLink: ['/content-general'] },
+                    { label: 'Recetas', icon: 'pi pi-fw pi-book', routerLink: ['/recipes'] }
                 ]
             },
             {
@@ -65,6 +66,42 @@ export class AppMenu implements OnInit {
                 icon: 'pi pi-fw pi-percentage',
                 path: '/taxes',
                 items: [{ label: 'Impuestos', icon: 'pi pi-fw pi-receipt', routerLink: ['/taxes'] }]
+            },
+            {
+                label: 'Configuración',
+                icon: 'pi pi-fw pi-cog',
+                items: [
+                    {
+                        label: 'Cuentas Bancarias',
+                        icon: 'pi pi-fw pi-wallet',
+                        routerLink: ['/settings/bank-accounts']
+                    },
+                    {
+                        label: 'WhatsApp',
+                        icon: 'pi pi-fw pi-whatsapp',
+                        routerLink: ['/settings/whatsapp']
+                    },
+                    {
+                        label: 'Tiendas Físicas',
+                        icon: 'pi pi-fw pi-map-marker',
+                        routerLink: ['/settings/physical-stores']
+                    },
+                    {
+                        label: 'Zona Delivery',
+                        icon: 'pi pi-fw pi-truck',
+                        routerLink: ['/settings/shipping-zones']
+                    },
+                    {
+                        label: 'SEO Páginas',
+                        icon: 'pi pi-fw pi-search',
+                        routerLink: ['/settings/seo-metadata']
+                    },
+                    {
+                        label: 'Scripts',
+                        icon: 'pi pi-fw pi-code',
+                        routerLink: ['/settings/custom-scripts']
+                    }
+                ]
             }
         ];
     }

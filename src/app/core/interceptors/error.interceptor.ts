@@ -14,6 +14,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) =>
                 if (error.status === 422) {
                     errorMessage = error.error?.message || 'Error de validación en los datos enviados.';
                     errors = error.error?.errors;
+                } else if (error.status === 401) {
+                    errorMessage = error.error?.message || 'Sesión expirada o no autorizada.';
                 } else if (error.status === 500) {
                     errorMessage = 'Error interno en el servidor de Laravel.';
                 } else {

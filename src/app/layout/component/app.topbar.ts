@@ -2,7 +2,12 @@ import { Component, inject } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { StyleClassModule } from 'primeng/styleclass';
+import { PopoverModule } from 'primeng/popover';
+import { DatePickerModule } from 'primeng/datepicker';
+import { TagModule } from 'primeng/tag';
+import { AppCalendarWidget } from './app.calendar-widget';
 import { AppConfigurator } from './app.configurator';
 import { LayoutService } from '@/app/layout/service/layout.service';
 import { AuthService } from '@/app/core/auth/auth.service';
@@ -10,7 +15,7 @@ import { AuthService } from '@/app/core/auth/auth.service';
 @Component({
     selector: 'app-topbar',
     standalone: true,
-    imports: [RouterModule, CommonModule, StyleClassModule, AppConfigurator],
+    imports: [RouterModule, CommonModule, FormsModule, StyleClassModule, PopoverModule, DatePickerModule, TagModule, AppConfigurator, AppCalendarWidget],
     template: `
         <div class="layout-topbar">
             <div class="layout-topbar-logo-container">
@@ -49,25 +54,17 @@ import { AuthService } from '@/app/core/auth/auth.service';
 
                 <div class="layout-topbar-menu hidden lg:block">
                     <div class="layout-topbar-menu-content">
-                        <button type="button" class="layout-topbar-action">
-                            <i class="pi pi-calendar"></i>
-                            <span>Calendar</span>
-                        </button>
-                        <button type="button" class="layout-topbar-action">
-                            <i class="pi pi-inbox"></i>
-                            <span>Messages</span>
-                        </button>
+                        <!-- AGENDA COMERCIAL Y OPERATIVA -->
+                        <app-calendar-widget />
 
-                        <!-- Perfil con dropdown -->
+                        <!-- Perfil -->
                         <div class="relative">
                             <button type="button" class="layout-topbar-action" pStyleClass="@next" enterFromClass="hidden" enterActiveClass="animate-scalein" leaveToClass="hidden" leaveActiveClass="animate-fadeout" [hideOnOutsideClick]="true">
                                 <i class="pi pi-user"></i>
                                 <span>{{ authService.user()?.name ?? 'Perfil' }}</span>
                             </button>
 
-                            <!-- Dropdown -->
                             <div class="hidden absolute right-0 top-full mt-2 w-48 bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl shadow-lg z-50 overflow-hidden">
-                                <!-- Info usuario -->
                                 <div class="px-4 py-3 border-b border-surface-200 dark:border-surface-700">
                                     <p class="text-sm font-medium text-surface-900 dark:text-surface-0 truncate">
                                         {{ authService.user()?.name }}
@@ -77,7 +74,6 @@ import { AuthService } from '@/app/core/auth/auth.service';
                                     </p>
                                 </div>
 
-                                <!-- Opciones -->
                                 <div class="py-1">
                                     <a
                                         routerLink="/settings"

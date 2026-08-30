@@ -1,5 +1,5 @@
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
-import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';
+import { ApplicationConfig, LOCALE_ID, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling } from '@angular/router';
 import Aura from '@primeuix/themes/aura';
 import { ConfirmationService } from 'primeng/api';
@@ -10,12 +10,18 @@ import { authInterceptor } from './app/core/interceptors/auth.interceptor';
 import { refreshInterceptor } from './app/core/interceptors/refresh.interceptor';
 import { errorInterceptor } from './app/core/interceptors/error.interceptor';
 
+import { registerLocaleData } from '@angular/common';
+import localeEsPE from '@angular/common/locales/es-PE';
+
+registerLocaleData(localeEsPE);
+
 export const appConfig: ApplicationConfig = {
     providers: [
         provideRouter(appRoutes, withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }), withEnabledBlockingInitialNavigation()),
         provideHttpClient(withFetch(), withInterceptors([authInterceptor, refreshInterceptor, errorInterceptor])),
         provideZonelessChangeDetection(),
         ConfirmationService,
-        providePrimeNG({ theme: { preset: Aura, options: { darkModeSelector: '.app-dark' } }, overlayAppendTo: 'body' })
+        providePrimeNG({ theme: { preset: Aura, options: { darkModeSelector: '.app-dark' } }, overlayAppendTo: 'body' }),
+        { provide: LOCALE_ID, useValue: 'es-PE' }
     ]
 };
