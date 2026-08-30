@@ -1,4 +1,5 @@
 export const environment = {
-  production: false,
-  apiUrl: 'http://localhost:8000/api'
+  production: true,
+  apiUrl: 'https://dev-daryza.playgrouplatam.com/api', 
+  frontendUrl: 'https://dev-daryza.playgrouplatam.com'  
 };

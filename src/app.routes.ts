@@ -17,6 +17,7 @@ export const appRoutes: Routes = [
 
     { path: 'landing', component: Landing },
     { path: 'notfound', component: Notfound },
+    
 
     {
         path: '',
@@ -26,6 +27,10 @@ export const appRoutes: Routes = [
             { path: '', component: Dashboard },
             { path: 'uikit', loadChildren: () => import('./app/pages/uikit/uikit.routes').then((m) => m.default) },
             { path: 'products', loadChildren: () => import('./app/pages/products/products.routes').then((m) => m.default) },
+            { 
+                path: 'content-general', 
+                loadChildren: () => import('./app/pages/content-general/content-general.routes').then((m) => m.default) 
+            },
             { path: 'documentation', component: Documentation },
             { path: 'pages', loadChildren: () => import('./app/pages/pages.routes').then((m) => m.default) }
         ]

@@ -24,11 +24,13 @@ export class AppMenu {
     ngOnInit() {
         this.model = [
             {
-                label: 'Home',
+                label: 'Administrador',
                 items: [
-                    { label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/dashboard'] },
+                    { label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/'] },
                     { label: 'Clientes', icon: 'pi pi-fw pi-users', routerLink: ['/customers'] },
-                    { label: 'Órdenes', icon: 'pi pi-fw pi-shopping-cart', routerLink: ['/orders'] }
+                    { label: 'Órdenes', icon: 'pi pi-fw pi-shopping-cart', routerLink: ['/orders'] },
+                    { label: 'Contenido General', icon: 'pi pi-fw pi-file-edit', routerLink: ['/content-general'] },
+                    { label: 'Recetas', icon: 'pi pi-fw pi-book', routerLink: ['/recipes'] }
                 ]
             },
             {
@@ -41,6 +43,42 @@ export class AppMenu {
                     { label: 'Categorías', icon: 'pi pi-fw pi-sitemap', routerLink: ['/products/categories'] },
                     { label: 'Atributos', icon: 'pi pi-fw pi-sliders-h', routerLink: ['/products/attributes'] },
                     { label: 'Sellos', icon: 'pi pi-fw pi-star', routerLink: ['/products/attributions'] }
+                ]
+            },
+            {
+                label: 'Configuración',
+                icon: 'pi pi-fw pi-cog',
+                items: [
+                    {
+                        label: 'Cuentas Bancarias',
+                        icon: 'pi pi-fw pi-wallet',
+                        routerLink: ['/settings/bank-accounts']
+                    },
+                    {
+                        label: 'WhatsApp',
+                        icon: 'pi pi-fw pi-whatsapp',
+                        routerLink: ['/settings/whatsapp']
+                    },
+                    {
+                        label: 'Tiendas Físicas',
+                        icon: 'pi pi-fw pi-map-marker',
+                        routerLink: ['/settings/physical-stores']
+                    },
+                    {
+                        label: 'Zona Delivery',
+                        icon: 'pi pi-fw pi-truck',
+                        routerLink: ['/settings/shipping-zones']
+                    },
+                    {
+                        label: 'SEO Páginas',
+                        icon: 'pi pi-fw pi-search',
+                        routerLink: ['/settings/seo-metadata']
+                    },
+                    {
+                        label: 'Scripts',
+                        icon: 'pi pi-fw pi-code',
+                        routerLink: ['/settings/custom-scripts']
+                    }
                 ]
             },
             {

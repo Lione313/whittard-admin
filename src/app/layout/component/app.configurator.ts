@@ -36,6 +36,22 @@ declare type SurfacesType = {
     };
 };
 
+// Paleta personalizada basada en el color #3F5562 (500)
+const whittardPalette = {
+    0: '#ffffff',
+    50: '#f3f6f8',
+    100: '#e2e8ed',
+    200: '#c6d3dc',
+    300: '#9eb4c4',
+    400: '#6f8ea4',
+    500: '#3F5562', // Color principal predeterminado
+    600: '#354854',
+    700: '#2d3b45',
+    800: '#27313a',
+    900: '#232a31',
+    950: '#151b20'
+};
+
 @Component({
     selector: 'app-configurator',
     standalone: true,
@@ -43,7 +59,7 @@ declare type SurfacesType = {
     template: `
         <div class="flex flex-col gap-4">
             <div>
-                <span class="text-sm text-muted-color font-semibold">Primary</span>
+                <span class="text-sm text-muted-color font-semibold">Color Primario</span>
                 <div class="pt-2 flex gap-2 flex-wrap justify-start">
                     @for (primaryColor of primaryColors(); track primaryColor.name) {
                         <button
@@ -63,7 +79,7 @@ declare type SurfacesType = {
                 </div>
             </div>
             <div>
-                <span class="text-sm text-muted-color font-semibold">Surface</span>
+                <span class="text-sm text-muted-color font-semibold">Superficie</span>
                 <div class="pt-2 flex gap-2 flex-wrap justify-start">
                     @for (surface of surfaces; track surface.name) {
                         <button
@@ -82,11 +98,11 @@ declare type SurfacesType = {
                 </div>
             </div>
             <div class="flex flex-col gap-2">
-                <span class="text-sm text-muted-color font-semibold">Presets</span>
+                <span class="text-sm text-muted-color font-semibold">Estilos (Presets)</span>
                 <p-selectbutton [options]="presets" [ngModel]="selectedPreset()" (ngModelChange)="onPresetChange($event)" [allowEmpty]="false" size="small" />
             </div>
             <div *ngIf="showMenuModeButton()" class="flex flex-col gap-2">
-                <span class="text-sm text-muted-color font-semibold">Menu Mode</span>
+                <span class="text-sm text-muted-color font-semibold">Modo de Menú</span>
                 <p-selectbutton [ngModel]="menuMode()" (ngModelChange)="onMenuModeChange($event)" [options]="menuModeOptions" [allowEmpty]="false" size="small" />
             </div>
         </div>
@@ -97,26 +113,25 @@ declare type SurfacesType = {
 })
 export class AppConfigurator {
     router = inject(Router);
-
     config: PrimeNG = inject(PrimeNG);
-
     layoutService: LayoutService = inject(LayoutService);
-
     platformId = inject(PLATFORM_ID);
-
     primeng = inject(PrimeNG);
 
     presets = Object.keys(presets);
-
     showMenuModeButton = signal(!this.router.url.includes('auth'));
 
     menuModeOptions = [
-        { label: 'Static', value: 'static' },
-        { label: 'Overlay', value: 'overlay' }
+        { label: 'Estático', value: 'static' },
+        { label: 'Superpuesto', value: 'overlay' }
     ];
 
     ngOnInit() {
         if (isPlatformBrowser(this.platformId)) {
+            // Asegura que si no hay color previo asignado, tome 'whittard' por defecto
+            if (!this.layoutService.layoutConfig().primary) {
+                this.layoutService.layoutConfig.update((state) => ({ ...state, primary: 'whittard' }));
+            }
             this.onPresetChange(this.layoutService.layoutConfig().preset);
         }
     }
@@ -261,19 +276,22 @@ export class AppConfigurator {
     ];
 
     selectedPrimaryColor = computed(() => {
-        return this.layoutService.layoutConfig().primary;
+        return this.layoutService.layoutConfig().primary || 'whittard';
     });
 
     selectedSurfaceColor = computed(() => this.layoutService.layoutConfig().surface);
-
     selectedPreset = computed(() => this.layoutService.layoutConfig().preset);
-
     menuMode = computed(() => this.layoutService.layoutConfig().menuMode);
 
     primaryColors = computed<SurfacesType[]>(() => {
         const presetPalette = presets[this.layoutService.layoutConfig().preset as KeyOfType<typeof presets>].primitive;
         const colors = ['emerald', 'green', 'lime', 'orange', 'amber', 'yellow', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'];
-        const palettes: SurfacesType[] = [{ name: 'noir', palette: {} }];
+        
+        // Incluye el nuevo color 'whittard' (#3F5562) en la primera posición de la lista
+        const palettes: SurfacesType[] = [
+            { name: 'whittard', palette: whittardPalette },
+            { name: 'noir', palette: {} }
+        ];
 
         colors.forEach((color) => {
             palettes.push({
@@ -286,7 +304,7 @@ export class AppConfigurator {
     });
 
     getPresetExt() {
-        const color: SurfacesType = this.primaryColors().find((c) => c.name === this.selectedPrimaryColor()) || {};
+        const color: SurfacesType = this.primaryColors().find((c) => c.name === this.selectedPrimaryColor()) || { name: 'whittard', palette: whittardPalette };
         const preset = this.layoutService.layoutConfig().preset;
 
         if (color.name === 'noir') {

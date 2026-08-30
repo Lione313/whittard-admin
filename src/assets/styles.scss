@@ -2,3 +2,20 @@
 @use 'primeicons/primeicons.css';
 @use '@/assets/layout/layout.scss';
 @use '@/assets/demo/demo.scss';
+
+/* Importar temas de Quill */
+@import 'quill/dist/quill.core.css';
+@import 'quill/dist/quill.snow.css';
+
+
+/* Fix para reset de Tailwind en viñetas y listas dentro del editor */
+.ql-editor {
+  ul {
+    list-style-type: disc !important;
+    padding-left: 1.5rem !important;
+  }
+  ol {
+    list-style-type: decimal !important;
+    padding-left: 1.5rem !important;
+  }
+}
