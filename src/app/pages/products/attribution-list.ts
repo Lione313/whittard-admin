@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -19,7 +19,7 @@ import { formatApiError } from '@/app/shared/utils/api-error';
 @Component({
     selector: 'app-attribution-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, ButtonModule, RippleModule, ToastModule, DialogModule, InputTextModule, DataTableComponent, ConfirmDialogComponent, MediaPickerComponent],
+    imports: [FormsModule, ButtonModule, RippleModule, ToastModule, DialogModule, InputTextModule, DataTableComponent, ConfirmDialogComponent, MediaPickerComponent],
     providers: [MessageService, ConfirmationService],
     template: `
         <ng-template #toolbarActionsTemplate>
@@ -38,7 +38,7 @@ import { formatApiError } from '@/app/shared/utils/api-error';
                 <div class="flex flex-col gap-4">
                     <div>
                         <label class="block font-medium mb-2">Nombre *</label>
-                        <input pInputText [(ngModel)]="form.name" class="w-full" autofocus />
+                        <input pInputText [(ngModel)]="form.name" class="w-full" />
                         @if (submitted && !form.name.trim()) {
                             <small class="text-red-500">El nombre es obligatorio.</small>
                         }
@@ -151,6 +151,7 @@ export class AttributionList implements OnInit {
         this.saving.set(true);
 
         const form = new FormData();
+
         form.append('name', this.form.name.trim());
 
         if (this.form.id) {

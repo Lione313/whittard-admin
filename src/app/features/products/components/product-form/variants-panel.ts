@@ -6,11 +6,12 @@ import { TableModule } from 'primeng/table';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { Attribute } from '@/app/features/products/models/attribute.model';
 import { ProductType, VariantDraft } from '@/app/features/products/models/product-form.model';
+import { CurrencyFormatPipe } from '@/app/shared/pipes/currency-format.pipe';
 
 @Component({
     selector: 'app-product-variants-panel',
     standalone: true,
-    imports: [CommonModule, FormsModule, ButtonModule, TableModule, ToggleSwitchModule],
+    imports: [CommonModule, FormsModule, ButtonModule, TableModule, ToggleSwitchModule, CurrencyFormatPipe],
     template: `
         <div class="flex flex-col gap-4">
             <div class="card !m-0 !p-0 overflow-x-auto">
@@ -55,14 +56,24 @@ import { ProductType, VariantDraft } from '@/app/features/products/models/produc
                             </td>
                             <td>
                                 @if (variant.sale_price !== null && variant.sale_price !== undefined) {
-                                    <span class="font-semibold text-primary">{{ variant.sale_price | number: '1.0-2' }}</span>
-                                    <span class="block text-muted-color line-through">{{ variant.price | number: '1.0-2' }}</span>
+                                    <span class="font-semibold text-primary">{{ variant.sale_price | currencyFormat }}</span>
+                                    <span class="block text-muted-color line-through">{{ variant.price | currencyFormat }}</span>
                                     <small class="block text-muted-color">{{ salePeriodLabel(variant) }}</small>
                                 } @else {
-                                    {{ variant.price !== null ? (variant.price | number: '1.0-2') : '—' }}
+                                    {{ variant.price !== null ? (variant.price | currencyFormat) : '—' }}
                                 }
                             </td>
-                            <td>{{ variant.stock ?? 0 }}</td>
+                            <td>
+                                <span class="font-semibold">{{ variant.stock ?? 0 }}</span>
+                                @if (variant.reserved_qty !== undefined && variant.available !== undefined) {
+                                    <small class="block text-muted-color">{{ variant.available }} disp. · {{ variant.reserved_qty }} reserv.</small>
+                                    @if (variant.is_low) {
+                                        <span class="inline-flex items-center gap-1 bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap mt-1 w-fit">
+                                            <i class="pi pi-exclamation-triangle"></i>Stock bajo
+                                        </span>
+                                    }
+                                }
+                            </td>
                             <td class="text-center">
                                 <p-toggleswitch [ngModel]="variant.is_active" (ngModelChange)="toggleVariantActive.emit({ variant, active: $event })" />
                             </td>
@@ -96,7 +107,7 @@ import { ProductType, VariantDraft } from '@/app/features/products/models/produc
                         </tr>
                     </ng-template>
                 </p-table>
-                @if (productType() !== 'simple') {
+                @if (productType() !== 'simple' || variants().length === 0) {
                     <div class="flex items-center justify-center py-3 border-t border-surface-100 dark:border-surface-800">
                         <p-button label="Agregar variante" icon="pi pi-plus" [outlined]="true" severity="secondary" (onClick)="addVariant.emit()" />
                     </div>
@@ -121,15 +132,19 @@ export class VariantsPanel {
 
     variantAttributeChips(variant: VariantDraft): { type: string; label: string; value: string }[] {
         const attrs = this.selectedAttributes();
+
         return Object.entries(variant.attributes).map(([type, value]) => {
             const attr = attrs.find((a) => a.type === type);
+
             return { type, label: attr?.label ?? type, value };
         });
     }
 
     salePeriodLabel(variant: VariantDraft): string {
         const end = variant.sale_ends_at_date;
+
         if (!end) return 'Oferta';
+
         return `Oferta hasta ${end.getDate().toString().padStart(2, '0')}/${(end.getMonth() + 1).toString().padStart(2, '0')}/${end.getFullYear()}`;
     }
 }

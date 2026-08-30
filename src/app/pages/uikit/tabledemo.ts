@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { InputTextModule } from 'primeng/inputtext';
 import { MultiSelectModule } from 'primeng/multiselect';
@@ -20,9 +20,7 @@ import { Customer, CustomerService, Representative } from '@/app/pages/service/c
 import { Product, ProductService } from '@/app/pages/service/product.service';
 import { ObjectUtils } from 'primeng/utils';
 
-interface expandedRows {
-    [key: string]: boolean;
-}
+type expandedRows = Record<string, boolean>;
 
 @Component({
     selector: 'app-table-demo',
@@ -421,17 +419,15 @@ export class TableDemo implements OnInit {
 
     @ViewChild('filter') filter!: ElementRef;
 
-    constructor(
-        private customerService: CustomerService,
-        private productService: ProductService
-    ) {}
+    private customerService = inject(CustomerService);
+    private productService = inject(ProductService);
 
     ngOnInit() {
         this.customerService.getCustomersLarge().then((customers) => {
             this.customers1 = customers;
             this.loading = false;
 
-            // @ts-ignore
+            // @ts-expect-error date field assigned from parseable string
             this.customers1.forEach((customer) => (customer.date = new Date(customer.date)));
         });
         this.customerService.getCustomersMedium().then((customers) => (this.customers2 = customers));
@@ -478,6 +474,7 @@ export class TableDemo implements OnInit {
                 } else {
                     const previousRowData = this.customers3[i - 1];
                     const previousRowGroup = previousRowData?.representative?.name;
+
                     if (representativeName === previousRowGroup) {
                         this.rowGroupMetadata[representativeName].size++;
                     } else {
@@ -495,9 +492,10 @@ export class TableDemo implements OnInit {
                     if (p.id) {
                         acc[p.id] = true;
                     }
+
                     return acc;
                 },
-                {} as { [key: string]: boolean }
+                {} as Record<string, boolean>
             );
             this.isExpanded = true;
         } else {

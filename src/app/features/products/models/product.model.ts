@@ -1,5 +1,6 @@
 import { Pagination } from './api.model';
 import { Attribute } from './attribute.model';
+import { SeoData } from '@/app/shared/models/seo.model';
 
 export type ProductStatus = 'draft' | 'published' | 'archived';
 
@@ -14,6 +15,11 @@ export interface AttributionSummary {
     id: string;
     name: string;
     image_url: string | null;
+}
+
+export interface FlavorSummary {
+    id: string;
+    name: string;
 }
 
 export interface VariantMedia {
@@ -32,6 +38,9 @@ export interface Variant {
     sale_price_starts_at: string | null;
     sale_price_ends_at: string | null;
     stock: number;
+    reserved_qty?: number;
+    available?: number;
+    is_low?: boolean;
     order: number;
     is_primary: boolean;
     is_active: boolean;
@@ -55,10 +64,15 @@ export interface Product {
     country_of_origin: string;
     descriptions: ProductDescriptions;
     status: ProductStatus;
+    tax_class_id?: string | null;
     attributions: AttributionSummary[];
     category: CategorySummary | null;
     attributes: Attribute[];
+    flavors: FlavorSummary[];
     variants: Variant[];
+    seo: SeoData | null;
+    combinable_products?: ProductListItem[];
+    similar_products?: ProductListItem[];
     created_at: string;
     updated_at: string;
 }
@@ -71,6 +85,7 @@ export interface ProductListItem {
     brand: string;
     status: ProductStatus;
     category: CategorySummary | null;
+    flavors: FlavorSummary[];
     variants_count: number;
     price_from: number | null;
     price_to: number | null;
@@ -84,6 +99,7 @@ export interface ProductFilters {
     sort?: string;
     status?: ProductStatus | null;
     category_id?: string | null;
+    flavor_ids?: string[] | null;
     search?: string | null;
 }
 
@@ -99,9 +115,12 @@ export interface ProductPayload {
     ingredients_description?: string | null;
     specifications_description?: string | null;
     status: ProductStatus;
+    tax_class_id?: string | null;
     attribution_ids?: string[];
+    flavor_ids?: string[];
     attribute_ids?: string[];
     variants?: Variant[];
+    seo?: SeoData | null;
 }
 
 export interface ProductListResponse {

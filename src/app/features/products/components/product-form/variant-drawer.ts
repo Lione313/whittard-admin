@@ -1,6 +1,7 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
@@ -9,17 +10,23 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { CheckboxModule } from 'primeng/checkbox';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { MessageModule } from 'primeng/message';
+import { ToastModule } from 'primeng/toast';
 import { DrawerModule } from 'primeng/drawer';
 import { hideBrokenImage } from '@/app/shared/utils/media';
+import { useBodyScrollLock } from '@/app/shared/utils/scroll-lock';
 import { Attribute, AttributeOptionValue } from '@/app/features/products/models/attribute.model';
 import { VariantDraft } from '@/app/features/products/models/product-form.model';
+import { VariantStock } from '@/app/features/inventory/models/inventory.model';
+import { StockAdjustDialog, StockAdjustContext } from '@/app/shared/components/stock-adjust-dialog/stock-adjust-dialog';
+import { StockMovementsDialog } from '@/app/shared/components/stock-movements-dialog/stock-movements-dialog';
 
 @Component({
     selector: 'app-product-variant-drawer',
     standalone: true,
-    imports: [CommonModule, FormsModule, ButtonModule, InputTextModule, SelectModule, InputNumberModule, DatePickerModule, CheckboxModule, ToggleSwitchModule, MessageModule, DrawerModule],
+    imports: [CommonModule, FormsModule, ButtonModule, InputTextModule, SelectModule, InputNumberModule, DatePickerModule, CheckboxModule, ToggleSwitchModule, MessageModule, ToastModule, DrawerModule, StockAdjustDialog, StockMovementsDialog],
+    providers: [MessageService],
     template: `
-        <p-drawer [visible]="visible()" (visibleChange)="visibleChange.emit($event)" [header]="isNewVariant() ? 'Nueva variante' : 'Editar variante'" position="right" [style]="{ width: '480px' }" [blockScroll]="true">
+        <p-drawer [visible]="visible()" (visibleChange)="visibleChange.emit($event)" [header]="isNewVariant() ? 'Nueva variante' : 'Editar variante'" position="right" [style]="{ width: '480px' }">
             <ng-template #content>
                 @if (variant(); as v) {
                     <div class="flex flex-col gap-5">
@@ -33,7 +40,7 @@ import { VariantDraft } from '@/app/features/products/models/product-form.model'
                             </div>
                             <div>
                                 <label class="block font-medium mb-2">SKU *</label>
-                                <input pInputText [(ngModel)]="v.sku" class="w-full" placeholder="Ej: WTC-MAT-LAT-100" autofocus />
+                                <input pInputText [(ngModel)]="v.sku" class="w-full" placeholder="Ej: WTC-MAT-LAT-100" />
                                 <small class="text-muted-color mt-1 block">Código único para identificar esta variante.</small>
                             </div>
                         </section>
@@ -55,6 +62,7 @@ import { VariantDraft } from '@/app/features/products/models/product-form.model'
                                                 optionValue="value"
                                                 placeholder="Seleccionar {{ ao.label.toLowerCase() }}"
                                                 showClear
+                                                emptyMessage="Sin resultados"
                                                 class="w-full"
                                             />
                                         </div>
@@ -72,10 +80,21 @@ import { VariantDraft } from '@/app/features/products/models/product-form.model'
                                     <label class="block font-medium mb-2">Precio *</label>
                                     <p-inputnumber [(ngModel)]="v.price" mode="decimal" [minFractionDigits]="2" class="w-full" />
                                 </div>
-                                <div>
-                                    <label class="block font-medium mb-2">Stock</label>
-                                    <p-inputnumber [(ngModel)]="v.stock" [min]="0" class="w-full" />
-                                </div>
+                                @if (v.id) {
+                                    <div>
+                                        <label class="block font-medium mb-2">Stock</label>
+                                        <div class="flex items-center gap-2">
+                                            <p-inputnumber [(ngModel)]="v.stock" [min]="0" class="w-full flex-1" [readonly]="true" />
+                                            <p-button label="Ajustar stock" icon="pi pi-pencil" severity="secondary" size="small" [outlined]="true" (onClick)="openAdjust(v)" />
+                                        </div>
+                                    </div>
+                                } @else {
+                                    <div>
+                                        <label class="block font-medium mb-2">Stock inicial</label>
+                                        <p-inputnumber [(ngModel)]="v.stock" [min]="0" class="w-full" />
+                                        <small class="text-muted-color mt-1 block">Unidades con las que se crea la variante. Luego se ajustan desde Inventario.</small>
+                                    </div>
+                                }
                             </div>
                         </section>
 
@@ -182,11 +201,17 @@ import { VariantDraft } from '@/app/features/products/models/product-form.model'
             </ng-template>
             <ng-template #footer>
                 <div class="flex justify-end gap-2">
-                    <p-button label="Cancelar" icon="pi pi-times" severity="secondary" text (onClick)="close.emit()" />
+                    <p-button label="Cancelar" icon="pi pi-times" severity="secondary" text (onClick)="onClose.emit()" />
                     <p-button label="Guardar variante" icon="pi pi-check" (onClick)="save.emit()" />
                 </div>
             </ng-template>
         </p-drawer>
+
+        <app-stock-adjust-dialog [visible]="adjustVisible()" [context]="adjustContext()" (visibleChange)="adjustVisible.set($event)" (adjusted)="onStockAdjusted($event)" />
+
+        <app-stock-movements-dialog [visible]="historyVisible()" [context]="historyContext()" (visibleChange)="historyVisible.set($event)" />
+
+        <p-toast />
     `
 })
 export class VariantDrawer {
@@ -198,7 +223,7 @@ export class VariantDrawer {
 
     visibleChange = output<boolean>();
     save = output<void>();
-    close = output<void>();
+    onClose = output<void>();
     hasSaleChange = output<VariantDraft>();
     saleDatesChange = output<VariantDraft>();
     setVariantAttribute = output<{ variant: VariantDraft; type: string; value: string | null }>();
@@ -206,10 +231,23 @@ export class VariantDrawer {
     openMediaEditor = output<{ variant: VariantDraft; index: number }>();
     removeMedia = output<{ variant: VariantDraft; index: number }>();
 
+    private messageService = inject(MessageService);
+
+    adjustVisible = signal(false);
+    adjustContext = signal<StockAdjustContext | null>(null);
+
+    historyVisible = signal(false);
+    historyContext = signal<{ id: string; sku: string; product_name?: string | null } | null>(null);
+
+    constructor() {
+        useBodyScrollLock(this.visible);
+    }
+
     hideBrokenImage = hideBrokenImage;
 
     onHasSaleToggle(value: boolean) {
         const variant = this.variant();
+
         if (!variant) return;
         variant.has_sale = value;
         this.hasSaleChange.emit(variant);
@@ -217,23 +255,76 @@ export class VariantDrawer {
 
     onSaleDateChange() {
         const variant = this.variant();
+
         if (!variant) return;
         this.saleDatesChange.emit(variant);
+    }
+
+    reservedQty(variant: VariantDraft): number {
+        return variant.reserved_qty ?? 0;
+    }
+
+    available(variant: VariantDraft): number {
+        if (variant.available !== undefined && variant.available !== null) return variant.available;
+
+        return (variant.stock ?? 0) - this.reservedQty(variant);
+    }
+
+    isLow(variant: VariantDraft): boolean {
+        if (variant.is_low !== undefined && variant.is_low !== null) return variant.is_low;
+
+        return this.available(variant) <= 0;
     }
 
     resolvedAttributeValue(ao: Attribute, value: string | undefined): string | undefined {
         if (!value) return value;
         const normalized = value.trim().toLowerCase();
         const match = ao.options.find((o) => o.value.trim().toLowerCase() === normalized);
+
         return match ? match.value : value;
     }
 
     attributeOptions(ao: Attribute, value: string | undefined): AttributeOptionValue[] {
         if (!value) return ao.options;
         const options = ao.options;
+
         if (options.some((o) => o.value === value)) return options;
         const normalized = value.trim().toLowerCase();
+
         if (options.some((o) => o.value.trim().toLowerCase() === normalized)) return options;
+
         return [...options, { value }];
+    }
+
+    openAdjust(variant: VariantDraft) {
+        this.adjustContext.set({
+            id: variant.id!,
+            sku: variant.sku,
+            product_name: null,
+            stock: variant.stock ?? 0,
+            reserved_qty: this.reservedQty(variant),
+            available: this.available(variant)
+        });
+        this.adjustVisible.set(true);
+    }
+
+    onStockAdjusted(data: VariantStock) {
+        const variant = this.variant();
+
+        if (variant) {
+            variant.stock = data.stock;
+            variant.reserved_qty = data.reserved_qty;
+            variant.available = data.available;
+            variant.is_low = data.is_low;
+        }
+    }
+
+    openHistory(variant: VariantDraft) {
+        this.historyContext.set({
+            id: variant.id!,
+            sku: variant.sku,
+            product_name: null
+        });
+        this.historyVisible.set(true);
     }
 }

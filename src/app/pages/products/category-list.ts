@@ -1,5 +1,5 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ConfirmationService, MessageService, TreeNode } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -22,7 +22,7 @@ import { formatApiError } from '@/app/shared/utils/api-error';
 @Component({
     selector: 'app-category-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, ButtonModule, RippleModule, ToastModule, DialogModule, InputTextModule, SelectModule, TreeTableModule, ToolbarModule, MessageModule, IconFieldModule, InputIconModule, ConfirmDialogComponent],
+    imports: [FormsModule, ButtonModule, RippleModule, ToastModule, DialogModule, InputTextModule, SelectModule, TreeTableModule, ToolbarModule, MessageModule, IconFieldModule, InputIconModule, ConfirmDialogComponent],
     providers: [MessageService, ConfirmationService],
     template: `
         <p-toolbar styleClass="mb-6">
@@ -50,8 +50,7 @@ import { formatApiError } from '@/app/shared/utils/api-error';
                     <tr>
                         <th style="min-width: 18rem">Nombre</th>
                         <th style="min-width: 12rem">Slug</th>
-                        <th style="width: 9rem">Productos</th>
-                        <th style="width: 11rem" class="text-center">Acciones</th>
+                        <th style="width: 11rem" class="text-right">Acciones</th>
                     </tr>
                 </ng-template>
 
@@ -65,15 +64,8 @@ import { formatApiError } from '@/app/shared/utils/api-error';
                             }
                         </td>
                         <td class="text-muted-color">{{ rowData.slug }}</td>
-                        <td>
-                            @if (rowData.products_count > 0) {
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-medium">{{ rowData.products_count }} producto(s)</span>
-                            } @else {
-                                <span class="text-muted-color text-sm">—</span>
-                            }
-                        </td>
-                        <td class="text-center">
-                            <div class="flex items-center justify-center gap-1">
+                        <td class="text-right">
+                            <div class="flex items-center justify-end gap-1">
                                 @if (!rowData.parent) {
                                     <p-button icon="pi pi-plus" severity="secondary" [text]="true" [rounded]="true" [title]="'Nueva subcategoría'" (onClick)="openNew(rowData.id)" />
                                 }
@@ -86,7 +78,7 @@ import { formatApiError } from '@/app/shared/utils/api-error';
 
                 <ng-template pTemplate="emptymessage">
                     <tr>
-                        <td colspan="4" class="text-center p-8 text-muted-color">No se encontraron categorías.</td>
+                        <td colspan="3" class="text-center p-8 text-muted-color">No se encontraron categorías.</td>
                     </tr>
                 </ng-template>
             </p-treetable>
@@ -102,7 +94,7 @@ import { formatApiError } from '@/app/shared/utils/api-error';
                 <div class="flex flex-col gap-4">
                     <div>
                         <label class="block font-medium mb-2">Nombre *</label>
-                        <input pInputText [(ngModel)]="form.name" class="w-full" autofocus placeholder="Ej: Té Verde" />
+                        <input pInputText [(ngModel)]="form.name" class="w-full" placeholder="Ej: Té Verde" />
                         @if (submitted && !form.name.trim()) {
                             <small class="text-red-500">El nombre es obligatorio.</small>
                         }
@@ -126,6 +118,7 @@ import { formatApiError } from '@/app/shared/utils/api-error';
                                 placeholder="Sin categoría padre (categoría raíz)"
                                 showClear
                                 filter
+                                emptyMessage="Sin resultados"
                                 appendTo="body"
                                 class="w-full"
                             />
@@ -171,6 +164,7 @@ export class CategoryList implements OnInit {
 
     isEditingSubcategory = computed(() => {
         const id = this.editingId();
+
         return id ? !!this.categories().find((c) => c.id === id)?.parent : false;
     });
 
@@ -189,15 +183,19 @@ export class CategoryList implements OnInit {
 
     private buildTree(categories: Category[], expanded: boolean): TreeNode[] {
         const byParent = new Map<string | null, Category[]>();
+
         for (const category of categories) {
             const key = category.parent?.id ?? null;
             const list = byParent.get(key) ?? [];
+
             list.push(category);
             byParent.set(key, list);
         }
+
         const build = (parentId: string | null): TreeNode[] =>
             (byParent.get(parentId) ?? []).map((category) => {
                 const children = build(category.id);
+
                 return {
                     key: category.id,
                     data: category,
@@ -206,6 +204,7 @@ export class CategoryList implements OnInit {
                     children
                 };
             });
+
         return build(null);
     }
 
@@ -217,15 +216,19 @@ export class CategoryList implements OnInit {
 
     selectedParentPath = computed<string[]>(() => {
         const parentId = this.parentId();
+
         if (!parentId) return [];
         const byId = new Map<string, Category>();
+
         for (const c of this.categories()) byId.set(c.id, c);
         const path: string[] = [];
         let current = byId.get(parentId);
+
         while (current) {
             path.unshift(current.name);
             current = current.parent ? byId.get(current.parent.id) : undefined;
         }
+
         return path;
     });
 
@@ -281,12 +284,15 @@ export class CategoryList implements OnInit {
         if (this.isEditingSubcategory()) {
             if (this.form.parent_id) {
                 this.messageService.add({ severity: 'warn', summary: 'Validación', detail: 'Una subcategoría no puede tener categoría padre. Solo se permiten dos niveles.', life: 5000 });
+
                 return;
             }
         } else if (this.form.parent_id) {
             const parent = this.categories().find((c) => c.id === this.form.parent_id);
+
             if (parent?.parent) {
                 this.messageService.add({ severity: 'warn', summary: 'Validación', detail: 'Solo se permiten dos niveles: categorías y subcategorías. No se puede crear una sub-subcategoría.', life: 5000 });
+
                 return;
             }
         }

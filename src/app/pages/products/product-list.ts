@@ -14,15 +14,18 @@ import { TagModule } from 'primeng/tag';
 import { ToolbarModule } from 'primeng/toolbar';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 
 import { ProductService } from '@/app/features/products/services/product.service';
 import { ProductListStateService } from '@/app/features/products/services/product-list-state.service';
+import { FlavorService } from '@/app/features/products/services/flavor.service';
 import { ProductImportResult, ProductListItem, ProductStatus } from '@/app/features/products/models/product.model';
 import { ConfirmDialogComponent } from '@/app/shared/components/confirm-dialog/confirm-dialog';
 import { ProductImportGuide } from '@/app/shared/components/product-import-guide/product-import-guide';
 import { formatApiError } from '@/app/shared/utils/api-error';
+import { CurrencyFormatPipe } from '@/app/shared/pipes/currency-format.pipe';
 
 @Component({
     selector: 'app-product-list',
@@ -41,10 +44,12 @@ import { formatApiError } from '@/app/shared/utils/api-error';
         ToolbarModule,
         InputTextModule,
         SelectModule,
+        MultiSelectModule,
         IconFieldModule,
         InputIconModule,
         ConfirmDialogComponent,
-        ProductImportGuide
+        ProductImportGuide,
+        CurrencyFormatPipe
     ],
     providers: [MessageService, ConfirmationService],
     template: `
@@ -66,6 +71,7 @@ import { formatApiError } from '@/app/shared/utils/api-error';
                 [value]="products()"
                 [lazy]="true"
                 [loading]="loading()"
+                [showLoader]="false"
                 [rows]="rows()"
                 [totalRecords]="totalRecords()"
                 [paginator]="true"
@@ -83,24 +89,45 @@ import { formatApiError } from '@/app/shared/utils/api-error';
                         <div class="flex flex-col md:flex-row md:items-center gap-3">
                             <p-iconfield iconPosition="left">
                                 <p-inputicon styleClass="pi pi-search" />
-                                <input pInputText type="text" [ngModel]="search()" (ngModelChange)="onSearchChange($event)" placeholder="Buscar por nombre, slug o marca..." class="w-full md:w-64" />
+                                <input pInputText type="text" [ngModel]="search()" (ngModelChange)="onSearchChange($event)" placeholder="Buscar por código, nombre o slug..." class="w-full md:w-64" />
                             </p-iconfield>
-                            <p-select [ngModel]="statusFilter()" (ngModelChange)="onStatusChange($event)" [options]="statusOptions" optionLabel="label" optionValue="value" placeholder="Estado" showClear class="w-full md:w-48" />
+                            <p-select
+                                [ngModel]="statusFilter()"
+                                (ngModelChange)="onStatusChange($event)"
+                                [options]="statusOptions"
+                                optionLabel="label"
+                                optionValue="value"
+                                placeholder="Estado"
+                                emptyMessage="Sin resultados"
+                                showClear
+                                class="w-full md:w-48"
+                            />
+                            <p-multiselect
+                                [ngModel]="flavorFilter()"
+                                (ngModelChange)="onFlavorChange($event)"
+                                [options]="state.flavors()"
+                                optionLabel="name"
+                                optionValue="id"
+                                placeholder="Sabor"
+                                emptyMessage="Sin resultados"
+                                showClear
+                                filter
+                                [maxSelectedLabels]="2"
+                                [selectedItemsLabel]="'{0} sabores'"
+                                class="w-full md:w-48"
+                            />
                         </div>
                     </div>
                 </ng-template>
 
                 <ng-template #header>
                     <tr>
+                        <th style="min-width: 10rem">Código</th>
                         <th pSortableColumn="name" style="min-width: 14rem">
                             Nombre
                             <p-sortIcon field="name" />
                         </th>
                         <th style="min-width: 10rem">Categoría</th>
-                        <th pSortableColumn="brand" style="min-width: 10rem">
-                            Marca
-                            <p-sortIcon field="brand" />
-                        </th>
                         <th style="min-width: 8rem">Estado</th>
                         <th style="min-width: 6rem">Variantes</th>
                         <th style="min-width: 9rem">Precio</th>
@@ -112,6 +139,7 @@ import { formatApiError } from '@/app/shared/utils/api-error';
 
                 <ng-template #body let-product>
                     <tr>
+                        <td class="text-muted-color">{{ product.code }}</td>
                         <td class="font-medium">{{ product.name }}</td>
                         <td>
                             @if (product.category) {
@@ -123,7 +151,6 @@ import { formatApiError } from '@/app/shared/utils/api-error';
                                 <span class="text-surface-400">—</span>
                             }
                         </td>
-                        <td>{{ product.brand }}</td>
                         <td>
                             <p-tag [value]="statusLabel(product.status)" [severity]="statusSeverity(product.status)" />
                         </td>
@@ -131,9 +158,9 @@ import { formatApiError } from '@/app/shared/utils/api-error';
                         <td>
                             @if (product.price_from !== null && product.price_to !== null) {
                                 @if (product.price_from === product.price_to) {
-                                    {{ product.price_from | number: '1.0-2' }}
+                                    {{ product.price_from | currencyFormat }}
                                 } @else {
-                                    {{ product.price_from | number: '1.0-2' }} – {{ product.price_to | number: '1.0-2' }}
+                                    {{ product.price_from | currencyFormat }} – {{ product.price_to | currencyFormat }}
                                 }
                             } @else {
                                 <span class="text-surface-400">—</span>
@@ -150,11 +177,11 @@ import { formatApiError } from '@/app/shared/utils/api-error';
 
                 <ng-template #loadingbody>
                     <tr>
-                        <td [attr.colspan]="9" class="text-center p-8">
-                            <span class="inline-flex items-center gap-2 text-muted-color">
+                        <td [attr.colspan]="9">
+                            <div class="flex items-center justify-center gap-2 text-muted-color" style="height: 320px">
                                 <i class="pi pi-spin pi-spinner"></i>
-                                Cargando productos...
-                            </span>
+                                <span>Cargando productos...</span>
+                            </div>
                         </td>
                     </tr>
                 </ng-template>
@@ -271,18 +298,21 @@ export class ProductList implements OnInit, OnDestroy {
     static readonly MAX_IMPORT_SIZE = 100 * 1024 * 1024;
 
     private productService = inject(ProductService);
-    private state = inject(ProductListStateService);
+    private flavorService = inject(FlavorService);
+    private stateService = inject(ProductListStateService);
     private messageService = inject(MessageService);
     private confirmationService = inject(ConfirmationService);
     private router = inject(Router);
 
     @ViewChild('dt') dt!: Table;
 
+    state = this.stateService;
     products = this.state.products;
     totalRecords = this.state.totalRecords;
     rows = this.state.rows;
     search = this.state.search;
     statusFilter = this.state.statusFilter;
+    flavorFilter = this.state.flavorFilter;
     loaded = this.state.loaded;
 
     loading = signal(false);
@@ -298,13 +328,17 @@ export class ProductList implements OnInit, OnDestroy {
 
     importPreviewEntries = computed(() => {
         const preview = this.importResult()?.preview;
+
         if (!preview) return [];
+
         return Object.entries(preview).map(([key, p]) => ({ key, ...p }));
     });
 
     importResultErrors = computed(() => {
         const errors = this.importResult()?.errors;
+
         if (!errors) return [];
+
         return Object.entries(errors).map(([key, fields]) => ({
             key,
             messages: Object.values(fields).flat()
@@ -318,6 +352,14 @@ export class ProductList implements OnInit, OnDestroy {
         }))
     );
 
+    statusOptions: { label: string; value: ProductStatus }[] = [
+        { label: 'Borrador', value: 'draft' },
+        { label: 'Publicado', value: 'published' },
+        { label: 'Archivado', value: 'archived' }
+    ];
+
+    private search$ = new Subject<string>();
+
     previewIcon(action: string): string {
         switch (action) {
             case 'created':
@@ -329,16 +371,12 @@ export class ProductList implements OnInit, OnDestroy {
         }
     }
 
-    statusOptions: { label: string; value: ProductStatus }[] = [
-        { label: 'Borrador', value: 'draft' },
-        { label: 'Publicado', value: 'published' },
-        { label: 'Archivado', value: 'archived' }
-    ];
-
-    private search$ = new Subject<string>();
-
     ngOnInit() {
         this.search$.pipe(debounceTime(400), distinctUntilChanged()).subscribe(() => this.resetAndLoad());
+        this.flavorService.list().subscribe({
+            next: (res) => this.state.flavors.set(res.data),
+            error: () => this.state.flavors.set([])
+        });
     }
 
     ngOnDestroy() {
@@ -348,12 +386,14 @@ export class ProductList implements OnInit, OnDestroy {
     load(event: TableLazyLoadEvent) {
         if (!this.loaded()) {
             this.loading.set(true);
+            this.products.set([]);
         }
 
         const page = event.first !== undefined && event.rows ? Math.floor(event.first / event.rows) + 1 : 1;
         const perPage = event.rows ?? this.rows();
 
         let sort: string | undefined;
+
         if (event.sortField && typeof event.sortField === 'string') {
             sort = (event.sortOrder === -1 ? '-' : '') + event.sortField;
         } else {
@@ -366,6 +406,7 @@ export class ProductList implements OnInit, OnDestroy {
                 per_page: perPage,
                 sort,
                 status: this.statusFilter(),
+                flavor_ids: this.flavorFilter() || null,
                 search: this.search() || null
             })
             .subscribe({
@@ -394,6 +435,11 @@ export class ProductList implements OnInit, OnDestroy {
         this.resetAndLoad();
     }
 
+    onFlavorChange(value: string[] | null) {
+        this.flavorFilter.set(Array.isArray(value) ? value : []);
+        this.resetAndLoad();
+    }
+
     resetAndLoad() {
         this.dt?.reset();
     }
@@ -408,6 +454,7 @@ export class ProductList implements OnInit, OnDestroy {
             next: (blob) => {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
+
                 a.href = url;
                 a.download = 'products.xlsx';
                 a.click();
@@ -425,17 +472,22 @@ export class ProductList implements OnInit, OnDestroy {
     onImportFileSelected(event: Event) {
         const input = event.target as HTMLInputElement;
         const file = input.files?.[0];
+
         input.value = '';
         if (!file) return;
 
         if (!file.name.toLowerCase().endsWith('.xlsx')) {
             this.messageService.add({ severity: 'error', summary: 'Archivo inválido', detail: 'El archivo debe ser un Excel (.xlsx).', life: 4000 });
+
             return;
         }
+
         if (file.size > ProductList.MAX_IMPORT_SIZE) {
             this.messageService.add({ severity: 'error', summary: 'Archivo demasiado grande', detail: 'El tamaño máximo permitido es 100 MB.', life: 4000 });
+
             return;
         }
+
         this.validateImport(file);
     }
 
@@ -470,16 +522,19 @@ export class ProductList implements OnInit, OnDestroy {
                 this.confirming.set(false);
                 this.closeImportReview();
                 const result = res.data;
+
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Importación finalizada',
                     detail: `${result.imported} creados · ${result.updated} actualizados · ${result.skipped} omitidos`,
                     life: 5000
                 });
+
                 if (result.errors && Object.keys(result.errors).length) {
                     this.importErrors.set(result.errors);
                     this.importErrorsDialogVisible.set(true);
                 }
+
                 this.resetAndLoad();
             },
             error: (err) => {

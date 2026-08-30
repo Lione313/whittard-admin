@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AppTopbar } from './app.topbar';
 import { AppSidebar } from './app.sidebar';
-import { AppFooter } from './app.footer';
 import { LayoutService } from '@/app/layout/service/layout.service';
 
 @Component({
@@ -27,6 +26,7 @@ export class AppLayout {
     constructor() {
         effect(() => {
             const state = this.layoutService.layoutState();
+
             if (state.mobileMenuActive) {
                 document.body.classList.add('blocked-scroll');
             } else {
@@ -38,6 +38,7 @@ export class AppLayout {
     containerClass = computed(() => {
         const config = this.layoutService.layoutConfig();
         const state = this.layoutService.layoutState();
+
         return {
             'layout-overlay': config.menuMode === 'overlay',
             'layout-static': config.menuMode === 'static',

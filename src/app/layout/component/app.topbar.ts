@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -15,7 +15,7 @@ import { AuthService } from '@/app/core/auth/auth.service';
 @Component({
     selector: 'app-topbar',
     standalone: true,
-    imports: [RouterModule, CommonModule, FormsModule, StyleClassModule, PopoverModule, DatePickerModule, TagModule, AppConfigurator,AppCalendarWidget],
+    imports: [RouterModule, CommonModule, FormsModule, StyleClassModule, PopoverModule, DatePickerModule, TagModule, AppConfigurator, AppCalendarWidget],
     template: `
         <div class="layout-topbar">
             <div class="layout-topbar-logo-container">
@@ -107,9 +107,6 @@ export class AppTopbar {
 
     layoutService = inject(LayoutService);
     authService = inject(AuthService);
-
-    today: Date = new Date();
-    selectedDate: Date = new Date();
 
     toggleDarkMode() {
         this.layoutService.layoutConfig.update((state) => ({

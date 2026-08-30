@@ -1,8 +1,8 @@
-import {Component} from '@angular/core';
-import {TimelineModule} from 'primeng/timeline';
-import {CardModule} from 'primeng/card';
-import {CommonModule} from '@angular/common';
-import {ButtonModule} from 'primeng/button';
+import { Component, OnInit } from '@angular/core';
+import { TimelineModule } from 'primeng/timeline';
+import { CardModule } from 'primeng/card';
+import { CommonModule } from '@angular/common';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
     selector: 'app-timeline-demo',
@@ -63,7 +63,9 @@ import {ButtonModule} from 'primeng/button';
                     </ng-template>
                     <ng-template #content let-event>
                         <p-card [header]="event.status" [subheader]="event.date">
-                            <img *ngIf="event.image" [src]="'/demo/images/product/' + event.image" [alt]="event.name" width="200" class="shadow" />
+                            @if (event.image) {
+                                <img [src]="'/demo/images/product/' + event.image" [alt]="event.name" width="200" class="shadow" />
+                            }
                             <p>
                                 Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore sed consequuntur error repudiandae numquam deserunt quisquam repellat libero asperiores earum nam nobis, culpa ratione quam perferendis esse,
                                 cupiditate neque quas!
@@ -102,7 +104,7 @@ import {ButtonModule} from 'primeng/button';
         </div>
     </div>`
 })
-export class TimelineDemo {
+export class TimelineDemo implements OnInit {
     events1: any[] = [];
 
     events2: any[] = [];

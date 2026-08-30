@@ -14,22 +14,24 @@ interface StatItem {
     standalone: true,
     imports: [CommonModule],
     template: `
-        <div *ngFor="let stat of stats()" class="col-span-12 lg:col-span-6 xl:col-span-3">
-            <div class="bg-surface-0 dark:bg-surface-900 p-6 rounded-2xl border border-surface-200 dark:border-surface-800 shadow-xs">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-bold uppercase tracking-wider text-surface-400">{{ stat.label }}</span>
-                    <span 
-                        class="text-xs font-semibold px-2 py-1 rounded-lg flex items-center gap-1"
-                        [ngClass]="stat.isPositive ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'"
-                    >
-                        <i [class]="stat.isPositive ? 'pi pi-arrow-up-right text-[10px]' : 'pi pi-arrow-down-right text-[10px]'"></i> 
-                        {{ stat.percentage }}
-                    </span>
+        @for (stat of stats(); track stat.label) {
+            <div class="col-span-12 lg:col-span-6 xl:col-span-3">
+                <div class="bg-surface-0 dark:bg-surface-900 p-6 rounded-2xl border border-surface-200 dark:border-surface-800 shadow-xs">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-surface-400">{{ stat.label }}</span>
+                        <span 
+                            class="text-xs font-semibold px-2 py-1 rounded-lg flex items-center gap-1"
+                            [ngClass]="stat.isPositive ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'"
+                        >
+                            <i [class]="stat.isPositive ? 'pi pi-arrow-up-right text-[10px]' : 'pi pi-arrow-down-right text-[10px]'"></i> 
+                            {{ stat.percentage }}
+                        </span>
+                    </div>
+                    <div class="text-3xl font-black text-surface-900 dark:text-surface-0 mb-1">{{ stat.value }}</div>
+                    <span class="text-xs text-surface-500">{{ stat.subtext }}</span>
                 </div>
-                <div class="text-3xl font-black text-surface-900 dark:text-surface-0 mb-1">{{ stat.value }}</div>
-                <span class="text-xs text-surface-500">{{ stat.subtext }}</span>
             </div>
-        </div>
+        }
     `
 })
 export class StatsWidget {

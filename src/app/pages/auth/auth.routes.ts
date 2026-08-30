@@ -4,11 +4,11 @@ import { Login } from './login';
 export default [
     {
         path: 'login',
-        component: Login,
+        component: Login
     },
     {
         path: '',
         redirectTo: 'login',
-        pathMatch: 'full',
-    },
+        pathMatch: 'full'
+    }
 ] as Routes;

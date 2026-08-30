@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, input, signal, OnInit, AfterViewInit } from '@angular/core';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RippleModule } from 'primeng/ripple';
@@ -92,7 +92,7 @@ import { filter } from 'rxjs/operators';
         `
     ]
 })
-export class AppMenuitem {
+export class AppMenuitem implements OnInit, AfterViewInit {
     layoutService = inject(LayoutService);
 
     router = inject(Router);
@@ -111,19 +111,24 @@ export class AppMenuitem {
 
     fullPath = computed(() => {
         const itemPath = this.item()?.path;
+
         if (!itemPath) return this.parentPath();
         const parent = this.parentPath();
+
         if (parent && !itemPath.startsWith(parent)) {
             return parent + itemPath;
         }
+
         return itemPath;
     });
 
     isActive = computed(() => {
         const activePath = this.layoutService.layoutState().activePath;
+
         if (this.item()?.path) {
             return activePath?.startsWith(this.fullPath() ?? '') ?? false;
         }
+
         return false;
     });
 
@@ -151,6 +156,7 @@ export class AppMenuitem {
 
     updateActiveStateFromRoute() {
         const item = this.item();
+
         if (!item?.routerLink) return;
 
         const isRouteActive = this.router.isActive(item.routerLink[0], {
@@ -162,6 +168,7 @@ export class AppMenuitem {
 
         if (isRouteActive) {
             const parentPath = this.parentPath();
+
             if (parentPath) {
                 this.layoutService.layoutState.update((val) => ({
                     ...val,
@@ -176,6 +183,7 @@ export class AppMenuitem {
 
         if (item?.disabled) {
             event.preventDefault();
+
             return;
         }
 

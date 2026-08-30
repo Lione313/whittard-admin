@@ -21,6 +21,9 @@ export interface VariantDraft {
     sale_starts_at_date: Date | null;
     sale_ends_at_date: Date | null;
     stock: number | null;
+    reserved_qty?: number;
+    available?: number;
+    is_low?: boolean;
     is_primary: boolean;
     is_active: boolean;
     attributes: Record<string, string>;
@@ -39,6 +42,7 @@ export interface ProductFormValue {
     long_description: string;
     ingredients_description: string;
     specifications_description: string;
+    tax_class_id: string | null;
 }
 
 export function emptyFormValue(): ProductFormValue {
@@ -53,6 +57,7 @@ export function emptyFormValue(): ProductFormValue {
         short_description: '',
         long_description: '',
         ingredients_description: '',
-        specifications_description: ''
+        specifications_description: '',
+        tax_class_id: null
     };
 }

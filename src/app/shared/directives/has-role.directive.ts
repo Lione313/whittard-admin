@@ -16,7 +16,7 @@ export class HasRoleDirective {
         effect(() => {
             const rawRoles = this.appHasRole();
             const requiredRoles = Array.isArray(rawRoles) ? rawRoles : [rawRoles];
-            
+
             const userRole = this.authService.user()?.role;
 
             this.viewContainer.clear();

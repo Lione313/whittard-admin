@@ -5,9 +5,11 @@ import { PendingChangesService } from './pending-changes.service';
 
 export const discardChangesGuard: CanDeactivateFn<unknown> = (): boolean | Promise<boolean> => {
     const pending = inject(PendingChangesService);
+
     if (!pending.hasChanges()) return true;
 
     const confirmation = inject(ConfirmationService);
+
     return new Promise<boolean>((resolve) => {
         confirmation.confirm({
             header: 'Descartar cambios',

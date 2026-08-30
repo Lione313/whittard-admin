@@ -206,6 +206,7 @@ export class RichTextEditorComponent implements ControlValueAccessor {
 
     private createEditor() {
         const el = this.editorEl()?.nativeElement;
+
         if (!el) return;
 
         this.editor = new Editor({
@@ -217,6 +218,7 @@ export class RichTextEditorComponent implements ControlValueAccessor {
                     this.internalValue = editor.getHTML();
                     this.onChange(this.internalValue);
                 }
+
                 this.updateActiveStates();
             },
             onSelectionUpdate: () => this.updateActiveStates(),
@@ -285,6 +287,7 @@ export class RichTextEditorComponent implements ControlValueAccessor {
 
         if (url === '') {
             this.editor.chain().focus().extendMarkRange('link').unsetLink().run();
+
             return;
         }
 

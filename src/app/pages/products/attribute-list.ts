@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -40,7 +40,7 @@ const COLOR_HEX_REGEX = /^#[0-9A-Fa-f]{6}$/;
 @Component({
     selector: 'app-attribute-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, ButtonModule, RippleModule, ToastModule, DialogModule, InputTextModule, SelectModule, ColorPickerModule, DataTableComponent, ConfirmDialogComponent, MediaPickerComponent],
+    imports: [FormsModule, ButtonModule, RippleModule, ToastModule, DialogModule, InputTextModule, SelectModule, ColorPickerModule, DataTableComponent, ConfirmDialogComponent, MediaPickerComponent],
     providers: [MessageService, ConfirmationService],
     template: `
         <ng-template #toolbarActionsTemplate>
@@ -60,7 +60,7 @@ const COLOR_HEX_REGEX = /^#[0-9A-Fa-f]{6}$/;
                     <div class="grid grid-cols-12 gap-4">
                         <div class="col-span-12 md:col-span-6">
                             <label class="block font-medium mb-2">Nombre visible *</label>
-                            <input pInputText [ngModel]="form.label" (ngModelChange)="onLabelChange($event)" class="w-full" placeholder="Ej: Presentación" autofocus />
+                            <input pInputText [ngModel]="form.label" (ngModelChange)="onLabelChange($event)" class="w-full" placeholder="Ej: Presentación" />
                             <small class="text-muted-color block mt-1">Etiqueta que ve el cliente.</small>
                         </div>
                         <div class="col-span-12 md:col-span-6">
@@ -86,7 +86,15 @@ const COLOR_HEX_REGEX = /^#[0-9A-Fa-f]{6}$/;
                                     <div class="flex items-center gap-2">
                                         <span class="font-medium w-24 shrink-0">Swatch</span>
                                         <div class="flex-1 flex items-center gap-3">
-                                            <p-select [ngModel]="swatchType(opt)" (ngModelChange)="setSwatchType(opt, $event)" [options]="swatchTypeOptions" optionLabel="label" optionValue="value" class="w-32 shrink-0" />
+                                            <p-select
+                                                [ngModel]="swatchType(opt)"
+                                                (ngModelChange)="setSwatchType(opt, $event)"
+                                                [options]="swatchTypeOptions"
+                                                optionLabel="label"
+                                                optionValue="value"
+                                                emptyMessage="Sin resultados"
+                                                class="w-32 shrink-0"
+                                            />
                                             @if (swatchType(opt) === 'image') {
                                                 <app-media-picker
                                                     class="flex-1"
@@ -180,6 +188,7 @@ export class AttributeList implements OnInit {
             label: attribute.label,
             options: (attribute.options ?? []).map((o) => {
                 const swatch_mode = o.color_hex ? 'color' : o.image_url ? 'image' : 'none';
+
                 return { value: o.value, image_url: o.image_url ?? null, color_hex: o.color_hex ?? null, order: o.order ?? 0, swatch_mode };
             })
         };
@@ -195,6 +204,7 @@ export class AttributeList implements OnInit {
 
     onLabelChange(label: string) {
         this.form.label = label;
+
         if (!this.typeEdited) {
             this.form.type = this.slugify(label);
         }
@@ -227,6 +237,7 @@ export class AttributeList implements OnInit {
 
     setSwatchType(opt: AttributeOptionDraft, type: 'none' | 'image' | 'color' | null) {
         opt.swatch_mode = type ?? 'none';
+
         if (type === 'image') {
             opt.color_hex = null;
         } else if (type === 'color') {
@@ -237,6 +248,7 @@ export class AttributeList implements OnInit {
             opt.file = null;
             opt.color_hex = null;
         }
+
         this.cdr.detectChanges();
     }
 
@@ -260,42 +272,56 @@ export class AttributeList implements OnInit {
 
     saveAttribute() {
         this.submitted = true;
+
         if (!this.form.label?.trim()) {
             this.messageService.add({ severity: 'warn', summary: 'Validación', detail: 'El nombre visible es obligatorio.', life: 4000 });
+
             return;
         }
+
         if (!this.form.type?.trim()) {
             this.messageService.add({ severity: 'warn', summary: 'Validación', detail: 'La clave técnica es obligatoria.', life: 4000 });
+
             return;
         }
+
         if (!this.form.options.length) {
             this.messageService.add({ severity: 'warn', summary: 'Validación', detail: 'Debe existir al menos una opción.', life: 4000 });
+
             return;
         }
 
         for (const [i, opt] of this.form.options.entries()) {
             if (!opt.value?.trim()) {
                 this.messageService.add({ severity: 'warn', summary: 'Validación', detail: `La opción ${i + 1} debe tener un valor.`, life: 4000 });
+
                 return;
             }
+
             const hasImage = !!(opt.image_url || opt.file);
             const hasColor = !!opt.color_hex;
+
             if (hasImage && hasColor) {
                 this.messageService.add({ severity: 'warn', summary: 'Validación', detail: `La opción "${opt.value}" no puede tener imagen y color a la vez.`, life: 4000 });
+
                 return;
             }
+
             if (opt.color_hex && !COLOR_HEX_REGEX.test(opt.color_hex)) {
                 this.messageService.add({ severity: 'warn', summary: 'Validación', detail: `El color "${opt.color_hex}" debe estar en formato hexadecimal (#RRGGBB).`, life: 4000 });
+
                 return;
             }
         }
 
         this.saving.set(true);
         const formData = new FormData();
+
         formData.append('type', this.form.type.trim());
         formData.append('label', this.form.label.trim());
         this.form.options.forEach((opt, oi) => {
             formData.append(`options[${oi}][value]`, opt.value.trim());
+
             if (opt.file) {
                 formData.append(`options[${oi}][file]`, opt.file);
             } else if (opt.image_url) {
@@ -303,6 +329,7 @@ export class AttributeList implements OnInit {
             } else if (opt.color_hex) {
                 formData.append(`options[${oi}][color_hex]`, opt.color_hex);
             }
+
             formData.append(`options[${oi}][order]`, String(opt.order ?? oi));
         });
 

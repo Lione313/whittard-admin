@@ -6,15 +6,20 @@ import { GALLERY_ACCEPTANCE, isVideoFile } from '@/app/shared/utils/media';
 import { Attribute } from '../models/attribute.model';
 import { Attribution } from '../models/attribution.model';
 import { Category } from '../models/category.model';
-import { ProductStatus } from '../models/product.model';
+import { Flavor } from '../models/flavor.model';
+import { ProductListItem, ProductStatus } from '../models/product.model';
 import { emptyFormValue, MediaDraft, ProductFormValue, ProductType, VariantDraft } from '../models/product-form.model';
 import { buildProductFormData, formatApiDate, toFormValue, toVariantDraft } from '../utils/product-form.mapper';
 import { generalIssues as countGeneralIssues, validateVariantDraft, variantIssues as countVariantIssues } from '../utils/product-form.validator';
+import { normalizeSeoData, SeoData } from '@/app/shared/models/seo.model';
 import { AttributeService } from './attribute.service';
 import { AttributionService } from './attribution.service';
 import { CategoryService } from './category.service';
+import { FlavorService } from './flavor.service';
 import { PendingChangesService } from './pending-changes.service';
 import { ProductService } from './product.service';
+import { TaxService } from '@/app/features/tax/services/tax.service';
+import { TaxClass } from '@/app/features/tax/models/tax.model';
 
 export interface ProductFormInit {
     id: string | null;
@@ -25,7 +30,9 @@ export class ProductFormStore {
     private productService = inject(ProductService);
     private categoryService = inject(CategoryService);
     private attributionService = inject(AttributionService);
+    private flavorService = inject(FlavorService);
     private attributeService = inject(AttributeService);
+    private taxService = inject(TaxService);
     private messageService = inject(MessageService);
     private confirmationService = inject(ConfirmationService);
     private pendingChanges = inject(PendingChangesService);
@@ -45,10 +52,17 @@ export class ProductFormStore {
 
     form: ProductFormValue = emptyFormValue();
 
+    seo = signal<SeoData | null>(null);
+
     variants = signal<VariantDraft[]>([]);
     catalogAttributes = signal<Attribute[]>([]);
     attributeIds = signal<string[]>([]);
     attributionIds = signal<string[]>([]);
+    flavorIds = signal<string[]>([]);
+
+    combinableProducts = signal<ProductListItem[]>([]);
+    similarProducts = signal<ProductListItem[]>([]);
+    relatedSearchResults = signal<ProductListItem[]>([]);
 
     variantDrawerVisible = signal(false);
     editingVariant = signal<VariantDraft | null>(null);
@@ -61,6 +75,10 @@ export class ProductFormStore {
 
     categories = signal<Category[]>([]);
     attributions = signal<Attribution[]>([]);
+    flavors = signal<Flavor[]>([]);
+    taxClasses = signal<TaxClass[]>([]);
+
+    taxClassId = signal<string | null>(null);
 
     private uidCounter = 0;
 
@@ -79,6 +97,7 @@ export class ProductFormStore {
 
     isNewVariant = computed(() => {
         const draft = this.editingVariant();
+
         return draft ? !this.variants().some((v) => v.uid === draft.uid) : true;
     });
 
@@ -109,12 +128,14 @@ export class ProductFormStore {
     generalIssues = computed(() => {
         this.formVersion();
         if (!this.validated()) return 0;
+
         return countGeneralIssues(this.form);
     });
 
     variantsIssues = computed(() => {
         this.formVersion();
         if (!this.validated()) return 0;
+
         return countVariantIssues(this.variants());
     });
 
@@ -128,14 +149,19 @@ export class ProductFormStore {
 
     subcategoryOptions = computed(() => {
         const parentId = this.parentCategoryId();
+
         if (!parentId) return [];
+
         return this.categories()
             .filter((c) => c.parent?.id === parentId)
             .sort((a, b) => a.name.localeCompare(b.name));
     });
 
+    taxClassOptions = computed(() => this.taxClasses().map((t) => ({ label: t.name, value: t.id })));
+
     selectedAttributes = computed(() => {
         const ids = this.attributeIds();
+
         return this.catalogAttributes()
             .filter((a) => ids.includes(a.id))
             .map((a) => ({ ...a, options: [...a.options].sort((x, y) => (x.order ?? 0) - (y.order ?? 0)) }));
@@ -143,8 +169,25 @@ export class ProductFormStore {
 
     selectedAttributions = computed(() => {
         const ids = this.attributionIds();
+
         return this.attributions().filter((a) => ids.includes(a.id));
     });
+
+    selectedFlavors = computed(() => {
+        const ids = this.flavorIds();
+
+        return this.flavors().filter((f) => ids.includes(f.id));
+    });
+
+    combinableIds = computed(() => this.combinableProducts().map((p) => p.id));
+    similarIds = computed(() => this.similarProducts().map((p) => p.id));
+
+    relatedProductOptions = computed(() =>
+        this.relatedSearchResults()
+            .slice()
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map((p) => ({ label: p.code ? `${p.code} · ${p.name}` : p.name, value: p.id }))
+    );
 
     sortedCatalogAttributes = computed(() => [...this.catalogAttributes()].sort((a, b) => a.label.localeCompare(b.label)).map((a) => ({ ...a, options: [...a.options].sort((x, y) => (x.order ?? 0) - (y.order ?? 0)) })));
 
@@ -153,10 +196,9 @@ export class ProductFormStore {
         this.isEdit = !!options.id;
         this.id = options.id;
         this.loadReferenceData();
+
         if (options.id) {
             this.loadProduct(options.id);
-        } else {
-            this.ensureInitialVariant();
         }
     }
 
@@ -170,9 +212,11 @@ export class ProductFormStore {
         this.formVersion.set(0);
         this.productType.set('simple');
         this.form = emptyFormValue();
+        this.seo.set(null);
         this.parentCategoryId.set(null);
         this.attributeIds.set([]);
         this.attributionIds.set([]);
+        this.flavorIds.set([]);
         this.variants.set([]);
         this.variantFormError.set(null);
         this.variantDrawerVisible.set(false);
@@ -183,7 +227,13 @@ export class ProductFormStore {
         this.mediaEditorVariant.set(null);
         this.categories.set([]);
         this.attributions.set([]);
+        this.flavors.set([]);
+        this.taxClasses.set([]);
+        this.taxClassId.set(null);
         this.catalogAttributes.set([]);
+        this.combinableProducts.set([]);
+        this.similarProducts.set([]);
+        this.relatedSearchResults.set([]);
     }
 
     patchForm(patch: Partial<ProductFormValue>) {
@@ -213,11 +263,18 @@ export class ProductFormStore {
         this.markDirty();
     }
 
+    onTaxClassChange(value: string | null) {
+        this.taxClassId.set(value ?? null);
+        this.form.tax_class_id = value ?? null;
+        this.markDirty();
+    }
+
     onProductTypeChange(type: ProductType) {
         if (type === this.productType()) return;
 
         if (type === 'simple') {
             const variantCount = this.variants().length;
+
             if (variantCount > 1) {
                 this.confirmationService.confirm({
                     header: 'Cambiar a producto simple',
@@ -234,54 +291,35 @@ export class ProductFormStore {
                         this.markDirty();
                     }
                 });
+
                 return;
             }
+
             this.variants.set(this.variants().map((v) => ({ ...v, attributes: {} })));
             this.attributeIds.set([]);
         }
 
         this.productType.set(type);
-        if (type === 'simple') {
-            this.ensureInitialVariant();
-        }
-        this.markDirty();
-    }
 
-    private ensureInitialVariant() {
-        if (this.variants().length > 0) return;
-        this.variants.set([
-            {
-                uid: this.nextUid(),
-                sku: '',
-                price: null,
-                sale_price: null,
-                sale_price_starts_at: null,
-                sale_price_ends_at: null,
-                has_sale: false,
-                sale_starts_at_date: null,
-                sale_ends_at_date: null,
-                stock: 0,
-                is_primary: true,
-                is_active: true,
-                attributes: {},
-                media: []
-            }
-        ]);
+        this.markDirty();
     }
 
     private syncVariantAttributes() {
         if (this.catalogAttributes().length === 0) return;
         const validTypes = new Set(this.selectedAttributes().map((a) => a.type));
+
         this.variants.update((vs) =>
             vs.map((v) => {
                 const attributes = { ...v.attributes };
                 let changed = false;
+
                 for (const key of Object.keys(attributes)) {
                     if (!validTypes.has(key)) {
                         delete attributes[key];
                         changed = true;
                     }
                 }
+
                 return changed ? { ...v, attributes } : v;
             })
         );
@@ -298,10 +336,64 @@ export class ProductFormStore {
         this.markDirty();
     }
 
+    onFlavorIdsChange(ids: string[] | null) {
+        this.flavorIds.set(Array.isArray(ids) ? ids : []);
+        this.markDirty();
+    }
+
+    onSeoChange(seo: SeoData | null) {
+        this.seo.set(seo);
+        this.markDirty();
+    }
+
+    private selectedRelations(): ProductListItem[] {
+        return [...this.combinableProducts(), ...this.similarProducts()];
+    }
+
+    private toSelection(current: ProductListItem[], ids: string[] | null): ProductListItem[] {
+        const nextIds = Array.isArray(ids) ? ids : [];
+        const byId = new Map<string, ProductListItem>();
+
+        for (const item of [...this.relatedSearchResults(), ...this.selectedRelations()]) byId.set(item.id, item);
+
+        return nextIds.map((id) => byId.get(id)).filter((p): p is ProductListItem => !!p);
+    }
+
+    onCombinableChange(ids: string[] | null) {
+        this.combinableProducts.set(this.toSelection(this.combinableProducts(), ids));
+    }
+
+    onSimilarChange(ids: string[] | null) {
+        this.similarProducts.set(this.toSelection(this.similarProducts(), ids));
+    }
+
+    searchRelatedProducts(term: string) {
+        this.productService.list({ per_page: 10, sort: 'name', search: term || undefined }).subscribe({
+            next: (res) => {
+                const items = res.data.items ?? [];
+                const byId = new Map<string, ProductListItem>();
+
+                for (const item of [...items, ...this.relatedSearchResults(), ...this.selectedRelations()]) byId.set(item.id, item);
+
+                this.relatedSearchResults.set([...byId.values()]);
+            },
+            error: () => this.relatedSearchResults.set(this.relatedSearchResults())
+        });
+    }
+
     private loadReferenceData() {
         this.loadCategories();
         this.loadAttributions();
+        this.loadFlavors();
         this.loadCatalogAttributes();
+        this.loadTaxClasses();
+    }
+
+    private loadTaxClasses() {
+        this.taxService.listClasses().subscribe({
+            next: (res) => this.taxClasses.set(res.data ?? []),
+            error: () => this.taxClasses.set([])
+        });
     }
 
     private loadCategories() {
@@ -318,6 +410,13 @@ export class ProductFormStore {
         });
     }
 
+    private loadFlavors() {
+        this.flavorService.list().subscribe({
+            next: (res) => this.flavors.set(res.data),
+            error: () => this.flavors.set([])
+        });
+    }
+
     private loadCatalogAttributes() {
         this.attributeService.list().subscribe({
             next: (res) => this.catalogAttributes.set(res.data),
@@ -330,17 +429,21 @@ export class ProductFormStore {
         this.productService.get(id).subscribe({
             next: (res) => {
                 const p = res.data;
+
                 this.form = toFormValue(p);
                 this.status.set(p.status);
                 this.productType.set((p.attributes ?? []).length > 0 || (p.variants ?? []).length > 1 ? 'variable' : 'simple');
                 this.parentCategoryId.set(p.category?.parent?.id ?? null);
+                this.taxClassId.set(p.tax_class_id ?? null);
                 this.attributionIds.set((p.attributions ?? []).map((a) => a.id));
+                this.flavorIds.set((p.flavors ?? []).map((f) => f.id));
                 this.attributeIds.set((p.attributes ?? []).map((a) => a.id));
                 this.variants.set((p.variants ?? []).map((v) => toVariantDraft(v, () => this.nextUid())));
+                this.seo.set(normalizeSeoData(p.seo));
                 this.syncVariantAttributes();
-                if (this.productType() === 'simple') {
-                    this.ensureInitialVariant();
-                }
+                this.combinableProducts.set(p.combinable_products ?? []);
+                this.similarProducts.set(p.similar_products ?? []);
+                this.relatedSearchResults.set([...(p.combinable_products ?? []), ...(p.similar_products ?? [])]);
                 this.loading.set(false);
             },
             error: (err) => {
@@ -352,6 +455,7 @@ export class ProductFormStore {
 
     private nextUid(): string {
         this.uidCounter++;
+
         return `v-${Date.now()}-${this.uidCounter}`;
     }
 
@@ -417,6 +521,7 @@ export class ProductFormStore {
             variant.sale_starts_at_date = null;
             variant.sale_ends_at_date = null;
         }
+
         this.markDirty();
     }
 
@@ -427,14 +532,17 @@ export class ProductFormStore {
 
     saveVariantDraft() {
         const draft = this.editingVariant();
+
         if (!draft) return;
 
         this.variantFormError.set(null);
 
         const error = validateVariantDraft(draft);
+
         if (error) {
             this.variantFormError.set(error);
             this.messageService.add({ severity: 'warn', summary: 'Validación', detail: error, life: 4000 });
+
             return;
         }
 
@@ -451,16 +559,20 @@ export class ProductFormStore {
         this.variants.update((vs) => {
             const index = vs.findIndex((v) => v.uid === draft.uid);
             let next: VariantDraft[];
+
             if (index === -1) {
                 next = [...vs, draft];
             } else {
                 const copy = [...vs];
+
                 copy[index] = draft;
                 next = copy;
             }
+
             if (draft.is_primary) {
                 next = next.map((v) => (v.uid === draft.uid ? v : { ...v, is_primary: false }));
             }
+
             return next;
         });
         this.markDirty();
@@ -474,6 +586,7 @@ export class ProductFormStore {
 
     onVariantDrawerVisibleChange(visible: boolean) {
         this.variantDrawerVisible.set(visible);
+
         if (!visible) {
             this.editingVariant.set(null);
             this.variantFormError.set(null);
@@ -488,9 +601,12 @@ export class ProductFormStore {
     moveVariant(index: number, dir: number) {
         this.variants.update((vs) => {
             const target = index + dir;
+
             if (target < 0 || target >= vs.length) return vs;
             const copy = [...vs];
+
             [copy[index], copy[target]] = [copy[target], copy[index]];
+
             return copy;
         });
         this.markDirty();
@@ -501,9 +617,11 @@ export class ProductFormStore {
             variant.attributes = { ...variant.attributes, [type]: value };
         } else {
             const copy = { ...variant.attributes };
+
             delete copy[type];
             variant.attributes = copy;
         }
+
         this.markDirty();
     }
 
@@ -516,6 +634,7 @@ export class ProductFormStore {
 
     openMediaEditor(variant: VariantDraft, index: number) {
         const media = variant.media[index];
+
         if (!media) return;
         this.mediaEditorVariant.set(variant);
         this.mediaEditorIndex.set(index);
@@ -538,6 +657,7 @@ export class ProductFormStore {
         const variant = this.mediaEditorVariant();
         const media = this.mediaEditor();
         const index = this.mediaEditorIndex();
+
         if (!variant || !media) return;
 
         const next = variant.media.map((m) => ({ ...m, is_primary: false }));
@@ -547,6 +667,7 @@ export class ProductFormStore {
             variant.media = [...next, media];
         } else {
             const existing = variant.media[index];
+
             if (existing?.previewUrl && existing.previewUrl !== media.previewUrl) URL.revokeObjectURL(existing.previewUrl);
             this.setMediaPreview(media);
             next[index] = media;
@@ -568,6 +689,7 @@ export class ProductFormStore {
 
     removeMedia(variant: VariantDraft, index: number) {
         const removed = variant.media[index];
+
         if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
         variant.media = variant.media.filter((_, i) => i !== index);
         this.markDirty();
@@ -575,6 +697,7 @@ export class ProductFormStore {
 
     onMediaEditorFileChange(file: File | null) {
         const media = this.mediaEditor();
+
         if (!media) return;
         media.file = file;
         media.url = null;
@@ -586,6 +709,7 @@ export class ProductFormStore {
 
     onMediaEditorUrlChange(url: string | null) {
         const media = this.mediaEditor();
+
         if (!media) return;
         media.url = url;
         media.file = null;
@@ -601,10 +725,12 @@ export class ProductFormStore {
             form: this.form,
             status: this.status(),
             attributionIds: this.attributionIds(),
+            flavorIds: this.flavorIds(),
             attributeIds: this.attributeIds(),
             variants: this.variants(),
             selectedAttributeTypes: new Set(this.selectedAttributes().map((a) => a.type)),
-            isEdit: this.isEdit
+            isEdit: this.isEdit,
+            seo: this.seo()
         });
 
         const action = this.isEdit && this.id ? this.productService.update(this.id, formData) : this.productService.create(formData);
@@ -613,12 +739,33 @@ export class ProductFormStore {
             next: (res) => {
                 this.saving.set(false);
                 this.pendingChanges.clear();
-                this.messageService.add({ severity: 'success', summary: 'Guardado', detail: res.message, life: 3000 });
-                this.router.navigate(['/products/list']);
+                this.syncRelationsAfterSave(res.data?.id ?? this.id ?? undefined);
             },
             error: (err) => {
                 this.saving.set(false);
                 this.messageService.add({ severity: 'error', summary: 'Error', detail: formatApiError(err), life: 6000 });
+            }
+        });
+    }
+
+    private syncRelationsAfterSave(productId: string | undefined) {
+        const complete = () => this.router.navigate(['/products/list']);
+
+        if (!productId) {
+            this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Producto guardado.', life: 3000 });
+            complete();
+
+            return;
+        }
+
+        this.productService.syncRelations(productId, { combinable_product_ids: this.combinableIds(), similar_product_ids: this.similarIds() }).subscribe({
+            next: (res) => {
+                this.messageService.add({ severity: 'success', summary: 'Guardado', detail: res.message, life: 3000 });
+                complete();
+            },
+            error: (err) => {
+                this.messageService.add({ severity: 'warn', summary: 'Producto guardado', detail: `No se pudieron guardar las relaciones: ${formatApiError(err)}`, life: 6000 });
+                complete();
             }
         });
     }
@@ -628,41 +775,50 @@ export class ProductFormStore {
 
         if (this.generalIssues() > 0) {
             const detail = !this.form.name.trim() ? 'El nombre del producto es obligatorio.' : 'Debe seleccionar una categoría.';
+
             this.messageService.add({ severity: 'error', summary: 'Validación', detail, life: 4000 });
+
             return false;
         }
 
         if (this.variantsIssues() > 0) {
             const variants = this.variants();
             let detail: string;
+
             if (variants.length === 0) {
                 detail = 'Debe existir al menos una variante.';
             } else if (variants.filter((v) => v.is_primary).length > 1) {
                 detail = 'Solo una variante puede marcarse como principal.';
             } else {
                 detail = '';
+
                 for (const v of variants) {
                     if (!v.sku?.trim()) {
                         detail = 'Todas las variantes deben tener un SKU.';
                         break;
                     }
+
                     if (v.price === null || v.price === undefined || v.price <= 0) {
                         detail = `La variante "${v.sku}" debe tener un precio mayor a cero.`;
                         break;
                     }
+
                     if (v.sale_price !== null && v.sale_price !== undefined && v.price !== null && v.price !== undefined && v.sale_price > v.price) {
                         detail = `El precio de oferta de "${v.sku}" no puede ser mayor al precio regular.`;
                         break;
                     }
+
                     if (v.has_sale) {
                         if (v.sale_price === null || v.sale_price === undefined || v.sale_price <= 0) {
                             detail = `La variante "${v.sku}" debe indicar un precio de oferta.`;
                             break;
                         }
+
                         if (!v.sale_price_starts_at || !v.sale_price_ends_at) {
                             detail = `La variante "${v.sku}" debe indicar inicio y fin de la promoción.`;
                             break;
                         }
+
                         if (v.sale_starts_at_date && v.sale_ends_at_date && v.sale_ends_at_date <= v.sale_starts_at_date) {
                             detail = `La fecha de fin de la promoción de "${v.sku}" no puede ser anterior a la de inicio.`;
                             break;
@@ -670,7 +826,9 @@ export class ProductFormStore {
                     }
                 }
             }
+
             this.messageService.add({ severity: 'error', summary: 'Validación', detail, life: 4000 });
+
             return false;
         }
 
@@ -678,10 +836,12 @@ export class ProductFormStore {
     }
 
     confirmDiscard() {
-        if (!this.pendingChanges.hasChanges()) {
+        if (this.isEdit || !this.pendingChanges.hasChanges()) {
             this.goBack();
+
             return;
         }
+
         this.confirmationService.confirm({
             header: 'Descartar cambios',
             message: 'Tienes cambios sin guardar. Si sales de esta página, perderás todo lo que no hayas guardado.',

@@ -1,5 +1,5 @@
-import { Component, effect, ElementRef, input, output, signal, viewChild, ViewEncapsulation } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, effect, ElementRef, input, output, signal, viewChild } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { formatFileSize, isImageUrl, validateMediaFile } from '@/app/shared/utils/media';
@@ -7,7 +7,7 @@ import { formatFileSize, isImageUrl, validateMediaFile } from '@/app/shared/util
 @Component({
     selector: 'app-media-picker',
     standalone: true,
-    imports: [CommonModule, FormsModule, ButtonModule],
+    imports: [FormsModule, ButtonModule],
     template: `
         <div class="flex flex-col gap-2">
             <div class="flex items-center gap-3">
@@ -76,6 +76,7 @@ export class MediaPickerComponent {
         effect(() => {
             this.revokePreview();
             const file = this.file();
+
             if (file) {
                 this.objectUrl = URL.createObjectURL(file);
                 this.previewUrl.set(this.objectUrl);
@@ -98,13 +99,16 @@ export class MediaPickerComponent {
     onFileSelected(event: Event) {
         const input = event.target as HTMLInputElement;
         const file = input.files?.[0] ?? null;
+
         input.value = '';
 
         if (!file) return;
 
         const validationError = validateMediaFile(file, { extensions: this.accept(), maxBytes: this.maxSize() });
+
         if (validationError) {
             this.error.set(validationError);
+
             return;
         }
 
