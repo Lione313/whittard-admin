@@ -1,5 +1,6 @@
 import { Product, ProductStatus, Variant } from '../models/product.model';
 import { MediaDraft, ProductFormValue, VariantDraft } from '../models/product-form.model';
+import { SeoData } from '@/app/shared/models/seo.model';
 
 export function normalizeMediaType(type: string): 'image' | 'video' {
     return type?.toLowerCase() === 'video' ? 'video' : 'image';
@@ -8,6 +9,7 @@ export function normalizeMediaType(type: string): 'image' | 'video' {
 export function parseApiDate(value: string | null | undefined): Date | null {
     if (!value) return null;
     const date = new Date(value);
+
     return isNaN(date.getTime()) ? null : date;
 }
 
@@ -18,11 +20,13 @@ export function formatApiDate(date: Date): string {
     const h = String(date.getHours()).padStart(2, '0');
     const min = String(date.getMinutes()).padStart(2, '0');
     const s = String(date.getSeconds()).padStart(2, '0');
+
     return `${y}-${m}-${d} ${h}:${min}:${s}`;
 }
 
 export function toNullableHtml(html: string): string | null {
     const source = html ?? '';
+
     if (!source.trim()) return null;
 
     const doc = new DOMParser().parseFromString(source, 'text/html');
@@ -43,12 +47,14 @@ export function toFormValue(product: Product): ProductFormValue {
         short_description: product.descriptions?.short ?? '',
         long_description: product.descriptions?.long ?? '',
         ingredients_description: product.descriptions?.ingredients ?? '',
-        specifications_description: product.descriptions?.specifications ?? ''
+        specifications_description: product.descriptions?.specifications ?? '',
+        tax_class_id: product.tax_class_id ?? null
     };
 }
 
 export function toVariantDraft(variant: Variant, nextUid: () => string): VariantDraft {
     const has_sale = variant.sale_price != null && variant.sale_price !== undefined;
+
     return {
         uid: nextUid(),
         id: variant.id,
@@ -61,6 +67,9 @@ export function toVariantDraft(variant: Variant, nextUid: () => string): Variant
         sale_starts_at_date: has_sale ? parseApiDate(variant.sale_price_starts_at) : null,
         sale_ends_at_date: has_sale ? parseApiDate(variant.sale_price_ends_at) : null,
         stock: variant.stock,
+        reserved_qty: variant.reserved_qty,
+        available: variant.available,
+        is_low: variant.is_low,
         is_primary: variant.is_primary ?? false,
         is_active: variant.is_active ?? true,
         attributes: { ...(variant.attributes ?? {}) },
@@ -72,14 +81,16 @@ export interface ProductFormPayloadInput {
     form: ProductFormValue;
     status: ProductStatus;
     attributionIds: string[];
+    flavorIds: string[];
     attributeIds: string[];
     variants: VariantDraft[];
     selectedAttributeTypes: Set<string>;
     isEdit: boolean;
+    seo?: SeoData | null;
 }
 
 export function buildProductFormData(input: ProductFormPayloadInput): FormData {
-    const { form, status, attributionIds, attributeIds, variants, selectedAttributeTypes, isEdit } = input;
+    const { form, status, attributionIds, flavorIds, attributeIds, variants, selectedAttributeTypes, isEdit, seo } = input;
     const data = new FormData();
 
     data.append('name', form.name);
@@ -93,8 +104,10 @@ export function buildProductFormData(input: ProductFormPayloadInput): FormData {
     data.append('ingredients_description', toNullableHtml(form.ingredients_description) ?? '');
     data.append('specifications_description', toNullableHtml(form.specifications_description) ?? '');
     data.append('status', status);
+    data.append('tax_class_id', form.tax_class_id ?? '');
 
     appendIdFields(data, 'attribution_ids', attributionIds);
+    appendIdFields(data, 'flavor_ids', flavorIds);
     appendIdFields(data, 'attribute_ids', attributeIds);
 
     variants.forEach((v, vi) => {
@@ -102,10 +115,12 @@ export function buildProductFormData(input: ProductFormPayloadInput): FormData {
         data.append(`variants[${vi}][sku]`, v.sku);
         data.append(`variants[${vi}][price]`, String(v.price ?? 0));
         data.append(`variants[${vi}][sale_price]`, v.sale_price !== null && v.sale_price !== undefined ? String(v.sale_price) : '');
+
         if (v.has_sale && v.sale_price !== null && v.sale_price !== undefined) {
             data.append(`variants[${vi}][sale_price_starts_at]`, v.sale_price_starts_at ?? '');
             data.append(`variants[${vi}][sale_price_ends_at]`, v.sale_price_ends_at ?? '');
         }
+
         data.append(`variants[${vi}][stock]`, String(v.stock ?? 0));
         data.append(`variants[${vi}][is_primary]`, v.is_primary ? '1' : '0');
         data.append(`variants[${vi}][is_active]`, v.is_active === false ? '0' : '1');
@@ -118,6 +133,7 @@ export function buildProductFormData(input: ProductFormPayloadInput): FormData {
             data.append(`variants[${vi}][media][${mi}][type]`, m.type);
             data.append(`variants[${vi}][media][${mi}][is_primary]`, m.is_primary ? '1' : '0');
             data.append(`variants[${vi}][media][${mi}][order]`, String(m.order ?? mi));
+
             if (m.file) {
                 data.append(`variants[${vi}][media][${mi}][file]`, m.file);
             } else if (m.url) {
@@ -126,7 +142,34 @@ export function buildProductFormData(input: ProductFormPayloadInput): FormData {
         });
     });
 
+    appendSeoFields(data, seo, isEdit);
+
     return data;
+}
+
+function appendSeoFields(data: FormData, seo: SeoData | null | undefined, isEdit: boolean) {
+    if (!seo) {
+        if (isEdit) {
+            data.append('seo', '');
+        }
+
+        return;
+    }
+
+    data.append('seo[meta_title]', seo.meta_title);
+    data.append('seo[meta_description]', seo.meta_description);
+    seo.keywords.forEach((keyword) => data.append('seo[keywords][]', keyword));
+    data.append('seo[canonical_url]', seo.canonical_url);
+    data.append('seo[robots]', seo.robots);
+    data.append('seo[og_title]', seo.og_title);
+    data.append('seo[og_description]', seo.og_description);
+    data.append('seo[og_image]', seo.og_image);
+
+    if (seo.structured_data) {
+        data.append('seo[structured_data]', JSON.stringify(seo.structured_data));
+    }
+
+    data.append('seo[noindex]', seo.noindex ? '1' : '0');
 }
 
 function appendIdFields(data: FormData, base: string, ids: string[]) {

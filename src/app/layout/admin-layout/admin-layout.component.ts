@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { CommonModule } from '@angular/common';
+
 @Component({
     selector: 'app-admin-layout',
     standalone: true,
-    imports: [CommonModule, RouterOutlet],
+    imports: [RouterOutlet],
     template: `
         <div class="min-h-screen flex bg-slate-50 dark:bg-slate-900">
             <!-- Sidebar temporal o definitivo -->

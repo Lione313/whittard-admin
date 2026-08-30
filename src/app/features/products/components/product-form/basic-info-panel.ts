@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { ProductFormValue } from '@/app/features/products/models/product-form.model';
@@ -7,13 +7,18 @@ import { ProductFormValue } from '@/app/features/products/models/product-form.mo
 @Component({
     selector: 'app-product-basic-info',
     standalone: true,
-    imports: [CommonModule, FormsModule, InputTextModule],
+    imports: [FormsModule, InputTextModule],
     template: `
         <div class="card !m-0">
             <div class="border-b border-surface-100 dark:border-surface-800 pb-3 mb-4">
                 <span class="text-base font-semibold text-surface-900 dark:text-surface-0">Información Básica</span>
             </div>
             <div class="grid  gap-4">
+                <div>
+                    <label class="block font-medium mb-2">Código</label>
+                    <input pInputText [ngModel]="form().code" (ngModelChange)="onFieldChange('code', $event)" class="w-full" placeholder="Se genera automáticamente si se omite" />
+                    <small class="text-muted-color mt-1 block">Código único del producto (ej. WTC-2026-MAT-01). Si lo dejas vacío, se genera desde el nombre.</small>
+                </div>
                 <div>
                     <label class="block font-medium mb-2">Nombre *</label>
                     <input pInputText [ngModel]="form().name" (ngModelChange)="onFieldChange('name', $event)" class="w-full" placeholder="Ej: Té Verde Matcha Ceremonial" />
@@ -24,11 +29,6 @@ import { ProductFormValue } from '@/app/features/products/models/product-form.mo
                 <div>
                     <label class="block font-medium mb-2">Slug</label>
                     <input pInputText [ngModel]="form().slug" (ngModelChange)="onFieldChange('slug', $event)" class="w-full" placeholder="Se genera automáticamente si se omite" />
-                </div>
-                <div>
-                    <label class="block font-medium mb-2">Código</label>
-                    <input pInputText [ngModel]="form().code" (ngModelChange)="onFieldChange('code', $event)" class="w-full" placeholder="Se genera automáticamente si se omite" />
-                    <small class="text-muted-color mt-1 block">Código único del producto (ej. WTC-2026-MAT-01). Si lo dejas vacío, se genera desde el nombre.</small>
                 </div>
                 <div>
                     <label class="block font-medium mb-2">Marca *</label>

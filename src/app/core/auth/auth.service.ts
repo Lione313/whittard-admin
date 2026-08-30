@@ -8,7 +8,7 @@ interface LaravelAuthWrapper {
     success: boolean;
     message: string;
     data: {
-        access_token: string;  // ← era "token", la API devuelve "access_token"
+        access_token: string; // ← era "token", la API devuelve "access_token"
         refresh_token: string;
         token_type: string;
         user: User;
@@ -19,18 +19,18 @@ interface LaravelAuthWrapper {
     providedIn: 'root'
 })
 export class AuthService {
-    private api    = inject(ApiService);
+    private api = inject(ApiService);
     private router = inject(Router);
 
     private readonly TOKEN_KEY = 'whittard_access_token';
-    private readonly USER_KEY  = 'whittard_user';
+    private readonly USER_KEY = 'whittard_user';
 
-    private _user        = signal<User | null>(this.getStoredUser());
+    private _user = signal<User | null>(this.getStoredUser());
     private _accessToken = signal<string | null>(localStorage.getItem(this.TOKEN_KEY));
 
-    public user        = this._user.asReadonly();
+    public user = this._user.asReadonly();
     public accessToken = this._accessToken.asReadonly();
-    public isLoggedIn  = computed(() => !!this._accessToken());
+    public isLoggedIn = computed(() => !!this._accessToken());
 
     login(credentials: { email: string; password: string }): Observable<LaravelAuthWrapper> {
         return this.api.post<LaravelAuthWrapper>('v1/admin/auth/login', credentials).pipe(
@@ -45,7 +45,7 @@ export class AuthService {
     logout(): void {
         this.api.post('v1/admin/auth/logout', {}).subscribe({
             complete: () => this.clearSession(),
-            error:    () => this.clearSession(),
+            error: () => this.clearSession()
         });
     }
 
@@ -66,7 +66,9 @@ export class AuthService {
 
     private getStoredUser(): User | null {
         const stored = localStorage.getItem(this.USER_KEY);
+
         if (!stored || stored === 'undefined' || stored === 'null') return null;
+
         try {
             return JSON.parse(stored);
         } catch {

@@ -1,5 +1,5 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, computed, inject, PLATFORM_ID, signal } from '@angular/core';
+import { Component, computed, inject, PLATFORM_ID, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { $t, updatePreset, updateSurfacePalette } from '@primeuix/themes';
@@ -18,7 +18,7 @@ const presets = {
 
 declare type KeyOfType<T> = keyof T extends infer U ? U : never;
 
-declare type SurfacesType = {
+declare interface SurfacesType {
     name?: string;
     palette?: {
         0?: string;
@@ -34,7 +34,7 @@ declare type SurfacesType = {
         900?: string;
         950?: string;
     };
-};
+}
 
 @Component({
     selector: 'app-configurator',
@@ -51,14 +51,13 @@ declare type SurfacesType = {
                             [title]="primaryColor.name"
                             (click)="updateColors($event, 'primary', primaryColor)"
                             [ngClass]="{
-                                    'outline outline-primary': primaryColor.name === selectedPrimaryColor()
-                                }"
+                                'outline outline-primary': primaryColor.name === selectedPrimaryColor()
+                            }"
                             class="cursor-pointer w-5 h-5 rounded-full flex shrink-0 items-center justify-center outline-offset-1 shadow"
                             [style]="{
-                                    'background-color': primaryColor?.name === 'noir' ? 'var(--text-color)' : primaryColor?.palette?.['500']
-                                }"
-                        >
-                        </button>
+                                'background-color': primaryColor?.name === 'noir' ? 'var(--text-color)' : primaryColor?.palette?.['500']
+                            }"
+                        ></button>
                     }
                 </div>
             </div>
@@ -72,11 +71,11 @@ declare type SurfacesType = {
                             (click)="updateColors($event, 'surface', surface)"
                             class="cursor-pointer w-5 h-5 rounded-full flex shrink-0 items-center justify-center p-0 outline-offset-1"
                             [ngClass]="{
-                                    'outline outline-primary': selectedSurfaceColor() ? selectedSurfaceColor() === surface.name : layoutService.layoutConfig().darkTheme ? surface.name === 'zinc' : surface.name === 'slate'
-                                }"
+                                'outline outline-primary': selectedSurfaceColor() ? selectedSurfaceColor() === surface.name : layoutService.layoutConfig().darkTheme ? surface.name === 'zinc' : surface.name === 'slate'
+                            }"
                             [style]="{
-                                    'background-color': surface?.palette?.['500']
-                                }"
+                                'background-color': surface?.palette?.['500']
+                            }"
                         ></button>
                     }
                 </div>
@@ -85,17 +84,19 @@ declare type SurfacesType = {
                 <span class="text-sm text-muted-color font-semibold">Presets</span>
                 <p-selectbutton [options]="presets" [ngModel]="selectedPreset()" (ngModelChange)="onPresetChange($event)" [allowEmpty]="false" size="small" />
             </div>
-            <div *ngIf="showMenuModeButton()" class="flex flex-col gap-2">
-                <span class="text-sm text-muted-color font-semibold">Menu Mode</span>
-                <p-selectbutton [ngModel]="menuMode()" (ngModelChange)="onMenuModeChange($event)" [options]="menuModeOptions" [allowEmpty]="false" size="small" />
-            </div>
+            @if (showMenuModeButton()) {
+                <div class="flex flex-col gap-2">
+                    <span class="text-sm text-muted-color font-semibold">Menu Mode</span>
+                    <p-selectbutton [ngModel]="menuMode()" (ngModelChange)="onMenuModeChange($event)" [options]="menuModeOptions" [allowEmpty]="false" size="small" />
+                </div>
+            }
         </div>
     `,
     host: {
         class: 'hidden absolute top-13 right-0 w-72 p-4 bg-surface-0 dark:bg-surface-900 border border-surface rounded-border origin-top shadow-[0px_3px_5px_rgba(0,0,0,0.02),0px_0px_2px_rgba(0,0,0,0.05),0px_1px_4px_rgba(0,0,0,0.08)]'
     }
 })
-export class AppConfigurator {
+export class AppConfigurator implements OnInit {
     router = inject(Router);
 
     config: PrimeNG = inject(PrimeNG);
@@ -114,12 +115,6 @@ export class AppConfigurator {
         { label: 'Static', value: 'static' },
         { label: 'Overlay', value: 'overlay' }
     ];
-
-    ngOnInit() {
-        if (isPlatformBrowser(this.platformId)) {
-            this.onPresetChange(this.layoutService.layoutConfig().preset);
-        }
-    }
 
     surfaces: SurfacesType[] = [
         {
@@ -259,10 +254,7 @@ export class AppConfigurator {
             }
         }
     ];
-
-    selectedPrimaryColor = computed(() => {
-        return this.layoutService.layoutConfig().primary;
-    });
+    selectedPrimaryColor = computed(() => this.layoutService.layoutConfig().primary);
 
     selectedSurfaceColor = computed(() => this.layoutService.layoutConfig().surface);
 
@@ -414,12 +406,19 @@ export class AppConfigurator {
         }
     }
 
+    ngOnInit() {
+        if (isPlatformBrowser(this.platformId)) {
+            this.onPresetChange(this.layoutService.layoutConfig().preset);
+        }
+    }
+
     updateColors(event: any, type: string, color: any) {
         if (type === 'primary') {
             this.layoutService.layoutConfig.update((state) => ({ ...state, primary: color.name }));
         } else if (type === 'surface') {
             this.layoutService.layoutConfig.update((state) => ({ ...state, surface: color.name }));
         }
+
         this.applyTheme(type, color);
 
         event.stopPropagation();
@@ -437,6 +436,7 @@ export class AppConfigurator {
         this.layoutService.layoutConfig.update((state) => ({ ...state, preset: event }));
         const preset = presets[event as KeyOfType<typeof presets>];
         const surfacePalette = this.surfaces.find((s) => s.name === this.selectedSurfaceColor())?.palette;
+
         $t().preset(preset).preset(this.getPresetExt()).surfacePalette(surfacePalette).use({ useDefaultOptions: true });
     }
 

@@ -2,8 +2,8 @@ import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
 import { ApiError } from '../models/api-error.model';
 
-export const errorInterceptor: HttpInterceptorFn = (req, next) => {
-    return next(req).pipe(
+export const errorInterceptor: HttpInterceptorFn = (req, next) =>
+    next(req).pipe(
         catchError((error: HttpErrorResponse) => {
             let errorMessage = 'Ocurrió un error desconocido';
             let errors: Record<string, string[]> | undefined;
@@ -22,7 +22,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
             }
 
             console.error('[ErrorInterceptor]:', errorMessage, error);
+
             return throwError(() => new ApiError(errorMessage, error.status ?? 0, errors));
         })
     );
-};

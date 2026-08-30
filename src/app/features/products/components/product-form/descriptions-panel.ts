@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { TextareaModule } from 'primeng/textarea';
 import { RichTextEditorComponent } from '@/app/shared/components/rich-text-editor/rich-text-editor';
@@ -8,7 +8,7 @@ import { ProductFormValue } from '@/app/features/products/models/product-form.mo
 @Component({
     selector: 'app-product-descriptions',
     standalone: true,
-    imports: [CommonModule, FormsModule, TextareaModule, RichTextEditorComponent],
+    imports: [FormsModule, TextareaModule, RichTextEditorComponent],
     template: `
         <div class="card !m-0">
             <div class="border-b border-surface-100 dark:border-surface-800 pb-3 mb-4">
@@ -17,20 +17,7 @@ import { ProductFormValue } from '@/app/features/products/models/product-form.mo
             <div class="flex flex-col gap-4">
                 <div>
                     <label class="block font-medium mb-2">Descripción Corta</label>
-                    <div class="relative">
-                        <textarea
-                            pTextarea
-                            [ngModel]="form().short_description"
-                            (ngModelChange)="onFieldChange('short_description', $event)"
-                            rows="3"
-                            class="w-full"
-                            [maxlength]="160"
-                            placeholder="Resumen breve que se muestra en listados y búsquedas."
-                        ></textarea>
-                        <span class="absolute bottom-2 right-3 text-xs text-muted-color pointer-events-none" [class.text-red-500]="form().short_description.length >= 160" [class.font-medium]="form().short_description.length >= 160"
-                            >{{ form().short_description.length }}/160</span
-                        >
-                    </div>
+                    <textarea pTextarea [ngModel]="form().short_description" (ngModelChange)="onFieldChange('short_description', $event)" rows="3" class="w-full" placeholder="Resumen breve que se muestra en listados y búsquedas."></textarea>
                 </div>
                 <div>
                     <label class="block font-medium mb-2">Descripción Larga</label>

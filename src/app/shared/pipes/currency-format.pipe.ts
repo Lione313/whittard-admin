@@ -5,7 +5,9 @@ import { Pipe, PipeTransform } from '@angular/core';
     standalone: true
 })
 export class CurrencyFormatPipe implements PipeTransform {
-    transform(value: number | string | null | undefined, currencyCode: string = 'PEN', symbol: string = 'S/'): string {
+    transform(value: number | string | null | undefined): string {
+        const symbol = 'S/';
+
         if (value === null || value === undefined || isNaN(Number(value))) {
             return `${symbol} 0.00`;
         }

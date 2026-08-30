@@ -82,7 +82,7 @@ export class Login {
     isLoading = signal(false);
     serverError = signal<string | null>(null);
 
-   onSubmit(): void {
+    onSubmit(): void {
         if (!this.email || !this.password || this.isLoading()) return;
 
         this.serverError.set(null);
@@ -90,7 +90,7 @@ export class Login {
 
         this.auth.login({ email: this.email, password: this.password }).subscribe({
             next: () => {
-                this.router.navigateByUrl('/');  // el tap ya guardó el token, isLoggedIn() = true
+                this.router.navigateByUrl('/'); // el tap ya guardó el token, isLoggedIn() = true
             },
             error: (err) => {
                 this.isLoading.set(false);

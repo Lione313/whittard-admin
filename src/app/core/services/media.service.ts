@@ -18,7 +18,9 @@ export class MediaService {
 
     upload(files: File[]): Observable<ApiResponse<{ items: UploadedMedia[] }>> {
         const form = new FormData();
+
         for (const file of files) form.append('files[]', file);
+
         return this.api.post('v1/admin/media', form);
     }
 

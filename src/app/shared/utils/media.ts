@@ -20,13 +20,17 @@ export const BADGE_ACCEPTANCE: MediaAcceptance = {
 
 export function validateMediaFile(file: File, acceptance: MediaAcceptance): string | null {
     const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+
     if (!acceptance.extensions.includes(ext)) {
         return `Formato no permitido (${ext}). Permitidos: ${acceptance.extensions.join(', ')}.`;
     }
+
     if (file.size > acceptance.maxBytes) {
         const maxMb = (acceptance.maxBytes / 1024 / 1024).toFixed(0);
+
         return `El archivo supera el tamaño máximo de ${maxMb}MB.`;
     }
+
     return null;
 }
 
@@ -41,6 +45,7 @@ export function isImageFile(file: File): boolean {
 export function isImageUrl(url: string | null): boolean {
     if (!url) return false;
     const clean = url.split('?')[0].toLowerCase();
+
     return /\.(jpg|jpeg|png|webp|gif|svg|avif)$/.test(clean);
 }
 
@@ -51,5 +56,6 @@ export function hideBrokenImage(event: Event): void {
 export function formatFileSize(bytes: number): string {
     if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
     if (bytes >= 1024) return `${(bytes / 1024).toFixed(0)}KB`;
+
     return `${bytes}B`;
 }

@@ -4,14 +4,15 @@ import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 
 export const refreshInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(AuthService);
+    const authService = inject(AuthService);
 
-  return next(req).pipe(
-    catchError((error: HttpErrorResponse) => {
-      if (error.status === 401) {
-        authService.clearSession();
-      }
-      return throwError(() => error);
-    })
-  );
+    return next(req).pipe(
+        catchError((error: HttpErrorResponse) => {
+            if (error.status === 401) {
+                authService.clearSession();
+            }
+
+            return throwError(() => error);
+        })
+    );
 };

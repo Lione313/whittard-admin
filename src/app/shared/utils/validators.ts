@@ -1,10 +1,10 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 export class CustomValidators {
-  
     static peruDocument(): ValidatorFn {
         return (control: AbstractControl): ValidationErrors | null => {
             const val = control.value;
+
             if (!val) return null;
 
             const dniRegex = /^\d{8}$/;
@@ -20,9 +20,11 @@ export class CustomValidators {
     static peruPhone(): ValidatorFn {
         return (control: AbstractControl): ValidationErrors | null => {
             const val = control.value;
+
             if (!val) return null;
 
             const phoneRegex = /^9\d{8}$/;
+
             return phoneRegex.test(val) ? null : { invalidPhone: true };
         };
     }

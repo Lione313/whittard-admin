@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -60,16 +60,7 @@ import { AuthService } from '@/app/core/auth/auth.service';
 
                         <!-- Perfil con dropdown -->
                         <div class="relative">
-                            <button
-                                type="button"
-                                class="layout-topbar-action"
-                                pStyleClass="@next"
-                                enterFromClass="hidden"
-                                enterActiveClass="animate-scalein"
-                                leaveToClass="hidden"
-                                leaveActiveClass="animate-fadeout"
-                                [hideOnOutsideClick]="true"
-                            >
+                            <button type="button" class="layout-topbar-action" pStyleClass="@next" enterFromClass="hidden" enterActiveClass="animate-scalein" leaveToClass="hidden" leaveActiveClass="animate-fadeout" [hideOnOutsideClick]="true">
                                 <i class="pi pi-user"></i>
                                 <span>{{ authService.user()?.name ?? 'Perfil' }}</span>
                             </button>
@@ -109,7 +100,6 @@ import { AuthService } from '@/app/core/auth/auth.service';
                                 </div>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </div>
@@ -120,7 +110,7 @@ export class AppTopbar {
     items!: MenuItem[];
 
     layoutService = inject(LayoutService);
-    authService   = inject(AuthService);
+    authService = inject(AuthService);
 
     toggleDarkMode() {
         this.layoutService.layoutConfig.update((state) => ({

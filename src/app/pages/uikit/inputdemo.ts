@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { CheckboxModule } from 'primeng/checkbox';
 import { RadioButtonModule } from 'primeng/radiobutton';
@@ -35,7 +35,6 @@ import { Country } from '@/app/pages/service/customer.service';
     selector: 'app-input-demo',
     standalone: true,
     imports: [
-        CommonModule,
         FormsModule,
         InputTextModule,
         ButtonModule,
@@ -329,6 +328,7 @@ export class InputDemo implements OnInit {
 
         for (let i = 0; i < (this.autoValue as any[]).length; i++) {
             const country = (this.autoValue as any[])[i];
+
             if (country.name.toLowerCase().indexOf(query.toLowerCase()) == 0) {
                 filtered.push(country);
             }

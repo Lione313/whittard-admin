@@ -1,5 +1,5 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MessageService } from 'primeng/api';
@@ -17,11 +17,29 @@ import { AttributesPanel } from '@/app/features/products/components/product-form
 import { VariantsPanel } from '@/app/features/products/components/product-form/variants-panel';
 import { VariantDrawer } from '@/app/features/products/components/product-form/variant-drawer';
 import { MediaEditorDialog } from '@/app/features/products/components/product-form/media-editor-dialog';
+import { RelatedProductsPanel } from '@/app/features/products/components/product-form/related-products-panel';
+import { SeoPanel } from '@/app/shared/components/seo-panel/seo-panel';
 
 @Component({
     selector: 'app-product-form',
     standalone: true,
-    imports: [CommonModule, FormsModule, ButtonModule, RippleModule, ToastModule, ConfirmDialogModule, BasicInfoPanel, DescriptionsPanel, ProductSettingsPanel, VariantModeSelector, AttributesPanel, VariantsPanel, VariantDrawer, MediaEditorDialog],
+    imports: [
+        FormsModule,
+        ButtonModule,
+        RippleModule,
+        ToastModule,
+        ConfirmDialogModule,
+        BasicInfoPanel,
+        DescriptionsPanel,
+        ProductSettingsPanel,
+        VariantModeSelector,
+        AttributesPanel,
+        VariantsPanel,
+        VariantDrawer,
+        MediaEditorDialog,
+        RelatedProductsPanel,
+        SeoPanel
+    ],
     providers: [ProductFormStore, MessageService],
     template: `
         <div class="flex items-center gap-3 mb-6">
@@ -58,6 +76,16 @@ import { MediaEditorDialog } from '@/app/features/products/components/product-fo
                         (moveVariant)="store.moveVariant($event.index, $event.dir)"
                         (removeVariant)="store.removeVariant($event)"
                     />
+                    <app-seo-panel [value]="store.seo()" (valueChange)="store.onSeoChange($event)" />
+
+                    <app-related-products
+                        [combinableIds]="store.combinableIds()"
+                        [similarIds]="store.similarIds()"
+                        [options]="store.relatedProductOptions()"
+                        (searchChange)="store.searchRelatedProducts($event)"
+                        (combinableChange)="store.onCombinableChange($event)"
+                        (similarChange)="store.onSimilarChange($event)"
+                    />
                 </div>
 
                 <div class="min-w-0 xl:sticky xl:top-28 flex flex-col gap-3">
@@ -69,13 +97,20 @@ import { MediaEditorDialog } from '@/app/features/products/components/product-fo
                         [subcategoryOptions]="store.subcategoryOptions()"
                         [status]="store.status()"
                         [statusOptions]="store.statusOptions"
+                        [taxClassId]="store.taxClassId()"
+                        [taxClassOptions]="store.taxClassOptions()"
                         [attributions]="store.attributions()"
                         [attributionIds]="store.attributionIds()"
                         [selectedAttributions]="store.selectedAttributions()"
+                        [flavors]="store.flavors()"
+                        [flavorIds]="store.flavorIds()"
+                        [selectedFlavors]="store.selectedFlavors()"
                         (parentCategoryChange)="store.onParentCategoryChange($event)"
                         (subcategoryChange)="store.onSubcategoryChange($event)"
                         (statusChange)="store.onStatusChange($event)"
+                        (taxClassChange)="store.onTaxClassChange($event)"
                         (attributionIdsChange)="store.onAttributionIdsChange($event)"
+                        (flavorIdsChange)="store.onFlavorIdsChange($event)"
                     />
                     <div class="flex flex-col gap-2.5 pt-4">
                         <p-button label="Guardar" icon="pi pi-check" [loading]="store.saving()" styleClass="w-full" (onClick)="store.save()" />
@@ -94,7 +129,7 @@ import { MediaEditorDialog } from '@/app/features/products/components/product-fo
             [selectedAttributes]="store.selectedAttributes()"
             (visibleChange)="store.onVariantDrawerVisibleChange($event)"
             (save)="store.saveVariantDraft()"
-            (close)="store.closeVariantDrawer()"
+            (onClose)="store.closeVariantDrawer()"
             (hasSaleChange)="store.onHasSaleChange($event)"
             (saleDatesChange)="store.onSaleDatesChange($event)"
             (setVariantAttribute)="store.setVariantAttribute($event.variant, $event.type, $event.value)"
@@ -110,7 +145,7 @@ import { MediaEditorDialog } from '@/app/features/products/components/product-fo
             [mediaTypeOptions]="store.mediaTypeOptions"
             [acceptance]="store.GALLERY_ACCEPTANCE"
             (visibleChange)="store.setMediaEditorVisible($event)"
-            (close)="store.closeMediaEditor()"
+            (onClose)="store.closeMediaEditor()"
             (save)="store.saveMediaEditor()"
             (urlChange)="store.onMediaEditorUrlChange($event)"
             (fileChange)="store.onMediaEditorFileChange($event)"

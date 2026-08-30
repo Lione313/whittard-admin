@@ -55,9 +55,9 @@ import { ScrollPanelModule } from 'primeng/scrollpanel';
                         <h4 class="m-0 text-sm font-semibold uppercase tracking-wide text-muted-color">Ejemplo</h4>
                         <p class="m-0 mt-1 text-sm text-muted-color">Producto configurable con 2 variantes (atributos: presentacion, peso):</p>
                         <pre class="mt-2 p-3 rounded-lg bg-surface-50 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 overflow-x-auto text-xs leading-5">
-<code>codigo | sku | nombre | marca | pais_origen | categoria | subcategoria | estado | es_principal | es_activo | presentacion | peso | sellos | precio
-MAT-1  | LAT | Té     | X     | Japón       | Tés       | Matcha       | draft  | 1            | 1         | Lata          | 100g | Vegano | 28.5
-MAT-1  | BOL | Té     | X     | Japón       | Tés       | Matcha       | draft  | 0            | 1         | Bolsa         | 250g | Vegano | 45.0</code></pre>
+<code>codigo | sku | nombre | marca | pais_origen | categoria | subcategoria | estado | es_principal | es_activo | presentacion | peso | sellos | sabor | precio
+MAT-1  | LAT | Té     | X     | Japón       | Tés       | Matcha       | draft  | 1            | 1         | Lata          | 100g | Vegano | Umami | 28.5
+MAT-1  | BOL | Té     | X     | Japón       | Tés       | Matcha       | draft  | 0            | 1         | Bolsa         | 250g | Vegano | Umami | 45.0</code></pre>
                         <p class="m-0 mt-2 text-sm text-muted-color">Producto simple (1 sola variante, sin atributos):</p>
                         <pre class="mt-1 p-3 rounded-lg bg-surface-50 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 overflow-x-auto text-xs leading-5">
 <code>codigo | sku  | nombre     | marca | pais_origen | categoria | subcategoria | precio
@@ -89,6 +89,7 @@ export class ProductImportGuide {
         { name: 'es_activo', required: false, description: '1 o 0 (por defecto 1).' },
         { name: 'atributos…', required: false, description: 'Una columna por atributo (header = label normalizado, ej. presentacion). Si el producto usa atributos, cada variante debe llenar todos.' },
         { name: 'sellos', required: false, description: 'Sellos por nombre, separados por coma. Se crean si no existen.' },
+        { name: 'sabor', required: false, description: 'Sabores por nombre, separados por coma. Se reutilizan si existen en el catálogo y se crean si no.' },
         { name: 'precio', required: true, description: 'Precio de la variante (≥ 0).' },
         { name: 'precio_oferta', required: false, description: 'Precio de oferta (≥ 0 y ≤ precio). Si viene, exige oferta_inicia y oferta_fin.' },
         { name: 'oferta_inicia / oferta_fin', required: false, description: 'Vigencia de la oferta (juntas con precio_oferta).' },
