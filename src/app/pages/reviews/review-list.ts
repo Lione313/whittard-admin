@@ -122,14 +122,11 @@ import { formatApiError } from '@/app/shared/utils/api-error';
                             <div class="flex items-center gap-2 whitespace-nowrap">
                                 <span class="font-semibold text-surface-900 dark:text-surface-0">{{ review.rating }}</span>
                                 <span class="text-sm text-amber-500">
-                                    {{ '★'.repeat(review.rating) }}<span class="text-surface-300 dark:text-surface-600">{{ '★'.repeat(5 - review.rating) }}</span>
+                                    {{ filledStars(review.rating) }}<span class="text-surface-300 dark:text-surface-600">{{ emptyStars(review.rating) }}</span>
                                 </span>
                             </div>
                         </td>
                         <td>
-                            @if (review.title) {
-                                <span class="block font-medium">{{ review.title }}</span>
-                            }
                             <span class="text-muted-color line-clamp-2">{{ review.body }}</span>
                         </td>
                         <td>
@@ -208,18 +205,11 @@ import { formatApiError } from '@/app/shared/utils/api-error';
                             <span class="text-xs font-semibold uppercase tracking-wide text-muted-color">Calificación</span>
                             <span class="flex items-center gap-2 text-lg">
                                 <span class="text-amber-500"
-                                    >{{ '★'.repeat(review.rating) }}<span class="text-surface-300 dark:text-surface-600">{{ '★'.repeat(5 - review.rating) }}</span></span
+                                    >{{ filledStars(review.rating) }}<span class="text-surface-300 dark:text-surface-600">{{ emptyStars(review.rating) }}</span></span
                                 >
                                 <span class="text-sm text-muted-color font-medium">{{ review.rating }} / 5</span>
                             </span>
                         </div>
-
-                        @if (review.title) {
-                            <div class="flex flex-col gap-1">
-                                <span class="text-xs font-semibold uppercase tracking-wide text-muted-color">Título</span>
-                                <span class="font-medium">{{ review.title }}</span>
-                            </div>
-                        }
 
                         <div class="flex flex-col gap-1">
                             <span class="text-xs font-semibold uppercase tracking-wide text-muted-color">Comentario</span>
@@ -284,9 +274,7 @@ export class ReviewList implements OnInit, OnDestroy {
 
         if (!query) return this.reviews();
 
-        return this.reviews().filter(
-            (r) => r.title?.toLowerCase().includes(query) || r.body?.toLowerCase().includes(query) || r.customer?.name?.toLowerCase().includes(query) || r.product?.name?.toLowerCase().includes(query) || r.product?.code?.toLowerCase().includes(query)
-        );
+        return this.reviews().filter((r) => r.body?.toLowerCase().includes(query) || r.customer?.name?.toLowerCase().includes(query) || r.product?.name?.toLowerCase().includes(query) || r.product?.code?.toLowerCase().includes(query));
     });
 
     ngOnInit() {
@@ -438,7 +426,19 @@ export class ReviewList implements OnInit, OnDestroy {
     }
 
     stars(rating: number): string {
-        return '★'.repeat(Math.max(0, Math.min(5, rating))).padEnd(5, '☆');
+        const count = Math.max(0, Math.min(5, Math.floor(rating)));
+
+        return '★'.repeat(count).padEnd(5, '☆');
+    }
+
+    filledStars(rating: number): string {
+        return '★'.repeat(Math.max(0, Math.min(5, Math.floor(rating))));
+    }
+
+    emptyStars(rating: number): string {
+        const filled = Math.max(0, Math.min(5, Math.floor(rating)));
+
+        return '★'.repeat(5 - filled);
     }
 
     statusLabel(status: ReviewStatus): string {

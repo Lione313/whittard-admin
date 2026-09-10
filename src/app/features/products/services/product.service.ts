@@ -47,10 +47,6 @@ export class ProductService {
         return this.api.delete(`v1/admin/products/${id}`);
     }
 
-    syncRelations(id: string, payload: { combinable_product_ids?: string[]; similar_product_ids?: string[] }): Observable<ApiResponse<null>> {
-        return this.api.put(`v1/admin/products/${id}/relations`, payload);
-    }
-
     exportProducts(): Observable<Blob> {
         return this.api.getBlob('v1/admin/products/export');
     }

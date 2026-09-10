@@ -53,6 +53,15 @@ export class AppMenu implements OnInit {
                 items: [{ label: 'Cupones', icon: 'pi pi-fw pi-ticket', routerLink: ['/coupons/list'] }]
             },
             {
+                label: 'Mega Menú',
+                icon: 'pi pi-fw pi-bars',
+                path: '/megamenu',
+                items: [
+                    { label: 'Menú', icon: 'pi pi-fw pi-sitemap', routerLink: ['/megamenu/menu'] },
+                    { label: 'Landings', icon: 'pi pi-fw pi-file-edit', routerLink: ['/megamenu/landings'] }
+                ]
+            },
+            {
                 label: 'Inventario',
                 icon: 'pi pi-fw pi-box',
                 path: '/inventory',

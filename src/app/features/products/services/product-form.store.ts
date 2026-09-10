@@ -184,6 +184,7 @@ export class ProductFormStore {
 
     relatedProductOptions = computed(() =>
         this.relatedSearchResults()
+            .filter((p) => !this.isCurrentProduct(p.id))
             .slice()
             .sort((a, b) => a.name.localeCompare(b.name))
             .map((p) => ({ label: p.code ? `${p.code} · ${p.name}` : p.name, value: p.id }))
@@ -350,13 +351,24 @@ export class ProductFormStore {
         return [...this.combinableProducts(), ...this.similarProducts()];
     }
 
+    private isCurrentProduct(id: string): boolean {
+        return this.isEdit && !!this.id && this.id === id;
+    }
+
     private toSelection(current: ProductListItem[], ids: string[] | null): ProductListItem[] {
         const nextIds = Array.isArray(ids) ? ids : [];
         const byId = new Map<string, ProductListItem>();
 
-        for (const item of [...this.relatedSearchResults(), ...this.selectedRelations()]) byId.set(item.id, item);
+        for (const item of this.availableRelations()) byId.set(item.id, item);
 
-        return nextIds.map((id) => byId.get(id)).filter((p): p is ProductListItem => !!p);
+        return nextIds
+            .filter((id) => !this.isCurrentProduct(id))
+            .map((id) => byId.get(id))
+            .filter((p): p is ProductListItem => !!p);
+    }
+
+    private availableRelations(): ProductListItem[] {
+        return [...this.relatedSearchResults(), ...this.selectedRelations()].filter((p) => !this.isCurrentProduct(p.id));
     }
 
     onCombinableChange(ids: string[] | null) {
@@ -373,7 +385,7 @@ export class ProductFormStore {
                 const items = res.data.items ?? [];
                 const byId = new Map<string, ProductListItem>();
 
-                for (const item of [...items, ...this.relatedSearchResults(), ...this.selectedRelations()]) byId.set(item.id, item);
+                for (const item of [...items, ...this.availableRelations()]) byId.set(item.id, item);
 
                 this.relatedSearchResults.set([...byId.values()]);
             },
@@ -727,6 +739,8 @@ export class ProductFormStore {
             attributionIds: this.attributionIds(),
             flavorIds: this.flavorIds(),
             attributeIds: this.attributeIds(),
+            combinableProductIds: this.combinableIds(),
+            similarProductIds: this.similarIds(),
             variants: this.variants(),
             selectedAttributeTypes: new Set(this.selectedAttributes().map((a) => a.type)),
             isEdit: this.isEdit,
@@ -739,33 +753,12 @@ export class ProductFormStore {
             next: (res) => {
                 this.saving.set(false);
                 this.pendingChanges.clear();
-                this.syncRelationsAfterSave(res.data?.id ?? this.id ?? undefined);
+                this.messageService.add({ severity: 'success', summary: 'Guardado', detail: res.message, life: 3000 });
+                this.router.navigate(['/products/list']);
             },
             error: (err) => {
                 this.saving.set(false);
                 this.messageService.add({ severity: 'error', summary: 'Error', detail: formatApiError(err), life: 6000 });
-            }
-        });
-    }
-
-    private syncRelationsAfterSave(productId: string | undefined) {
-        const complete = () => this.router.navigate(['/products/list']);
-
-        if (!productId) {
-            this.messageService.add({ severity: 'success', summary: 'Guardado', detail: 'Producto guardado.', life: 3000 });
-            complete();
-
-            return;
-        }
-
-        this.productService.syncRelations(productId, { combinable_product_ids: this.combinableIds(), similar_product_ids: this.similarIds() }).subscribe({
-            next: (res) => {
-                this.messageService.add({ severity: 'success', summary: 'Guardado', detail: res.message, life: 3000 });
-                complete();
-            },
-            error: (err) => {
-                this.messageService.add({ severity: 'warn', summary: 'Producto guardado', detail: `No se pudieron guardar las relaciones: ${formatApiError(err)}`, life: 6000 });
-                complete();
             }
         });
     }

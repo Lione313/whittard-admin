@@ -83,6 +83,8 @@ export interface ProductFormPayloadInput {
     attributionIds: string[];
     flavorIds: string[];
     attributeIds: string[];
+    combinableProductIds: string[];
+    similarProductIds: string[];
     variants: VariantDraft[];
     selectedAttributeTypes: Set<string>;
     isEdit: boolean;
@@ -90,7 +92,7 @@ export interface ProductFormPayloadInput {
 }
 
 export function buildProductFormData(input: ProductFormPayloadInput): FormData {
-    const { form, status, attributionIds, flavorIds, attributeIds, variants, selectedAttributeTypes, isEdit, seo } = input;
+    const { form, status, attributionIds, flavorIds, attributeIds, combinableProductIds, similarProductIds, variants, selectedAttributeTypes, isEdit, seo } = input;
     const data = new FormData();
 
     data.append('name', form.name);
@@ -109,6 +111,8 @@ export function buildProductFormData(input: ProductFormPayloadInput): FormData {
     appendIdFields(data, 'attribution_ids', attributionIds);
     appendIdFields(data, 'flavor_ids', flavorIds);
     appendIdFields(data, 'attribute_ids', attributeIds);
+    appendIdFields(data, 'combinable_product_ids', combinableProductIds);
+    appendIdFields(data, 'similar_product_ids', similarProductIds);
 
     variants.forEach((v, vi) => {
         if (isEdit && v.id) data.append(`variants[${vi}][id]`, v.id);

@@ -18,7 +18,6 @@ export interface Review {
     product_id: string;
     product?: ReviewProductSummary | null;
     rating: number;
-    title: string | null;
     body: string;
     images: string[] | null;
     is_verified: boolean;
