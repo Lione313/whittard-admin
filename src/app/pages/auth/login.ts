@@ -41,16 +41,17 @@ import { AuthService } from '../../core/auth/auth.service';
                             <span class="text-muted-color font-medium">Inicia sesión para continuar</span>
                         </div>
 
-                        <div>
+                        <!-- Formulario envolvente -->
+                        <form (ngSubmit)="onSubmit()">
                             <label for="email1" class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2">Email</label>
-                            <input pInputText id="email1" type="text" placeholder="Email address" class="w-full md:w-120 mb-8" [(ngModel)]="email" />
+                            <input pInputText id="email1" name="email" type="text" placeholder="Email address" class="w-full md:w-120 mb-8" [(ngModel)]="email" />
 
                             <label for="password1" class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2">Password</label>
-                            <p-password id="password1" [(ngModel)]="password" placeholder="Password" [toggleMask]="true" styleClass="mb-4" [fluid]="true" [feedback]="false"></p-password>
+                            <p-password id="password1" name="password" [(ngModel)]="password" placeholder="Password" [toggleMask]="true" styleClass="mb-4" [fluid]="true" [feedback]="false"></p-password>
 
                             <div class="flex items-center justify-between mt-2 mb-8 gap-8">
                                 <div class="flex items-center">
-                                    <p-checkbox [(ngModel)]="checked" id="rememberme1" binary class="mr-2"></p-checkbox>
+                                    <p-checkbox [(ngModel)]="checked" name="rememberme" id="rememberme1" binary class="mr-2"></p-checkbox>
                                     <label for="rememberme1">Recordarme</label>
                                 </div>
                                 <span class="font-medium no-underline ml-2 text-right cursor-pointer text-primary">¿Olvidaste tu contraseña?</span>
@@ -63,8 +64,9 @@ import { AuthService } from '../../core/auth/auth.service';
                                 </div>
                             }
 
-                            <p-button label="Ingresar" styleClass="w-full" [loading]="isLoading()" [disabled]="isLoading() || !email || !password" (onClick)="onSubmit()" />
-                        </div>
+                            <!-- Botón con type="submit" -->
+                            <p-button type="submit" label="Ingresar" styleClass="w-full" [loading]="isLoading()" [disabled]="isLoading() || !email || !password" />
+                        </form>
                     </div>
                 </div>
             </div>
@@ -90,7 +92,7 @@ export class Login {
 
         this.auth.login({ email: this.email, password: this.password }).subscribe({
             next: () => {
-                this.router.navigateByUrl('/'); // el tap ya guardó el token, isLoggedIn() = true
+                this.router.navigateByUrl('/');
             },
             error: (err) => {
                 this.isLoading.set(false);

@@ -13,20 +13,25 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { environment } from '@/environments/environment.development';
+
+const PAGE_SLUG_MAP: Record<string, string> = {
+    home: '',
+    nosotros: 'nosotros',
+    'about-us': 'nosotros',
+    contacto: 'contacto',
+    contact: 'contacto',
+    'politicas-de-privacidad': 'politicas-de-privacidad',
+    'terminos-y-condiciones': 'terminos-y-condiciones',
+    'preguntas-frecuentes': 'preguntas-frecuentes',
+    'claims-book': 'libro-de-reclamaciones',
+    'libro-de-reclamaciones': 'libro-de-reclamaciones'
+};
 
 @Component({
     selector: 'app-content-general-grid',
     standalone: true,
-    imports: [
-        CommonModule, 
-        FormsModule, 
-        TabsModule, 
-        ButtonModule, 
-        InputTextModule, 
-        IconFieldModule, 
-        InputIconModule,
-        ToastModule
-    ],
+    imports: [CommonModule, FormsModule, TabsModule, ButtonModule, InputTextModule, IconFieldModule, InputIconModule, ToastModule],
     providers: [MessageService],
     template: `
         <p-toast />
@@ -75,11 +80,9 @@ import { MessageService } from 'primeng/api';
                                         <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-44">
                                             <div>
                                                 <span class="text-xs text-surface-400 block font-mono truncate mb-1">
-                                                    https://dev-daryza.playgrouplatam.com/
+                                                    {{ getPageUrl(page.slug) }}
                                                 </span>
-                                                <span class="text-xs uppercase tracking-wider font-semibold text-surface-400 block">
-                                                    SECCIÓN
-                                                </span>
+                                                <span class="text-xs uppercase tracking-wider font-semibold text-surface-400 block"> SECCIÓN </span>
                                                 <h3 class="text-base font-bold text-surface-800 dark:text-surface-100 mt-0.5 truncate">
                                                     {{ section.name }}
                                                 </h3>
@@ -109,8 +112,9 @@ import { MessageService } from 'primeng/api';
 })
 export class ContentGeneralGrid implements OnInit {
     private contentService = inject(ContentService);
-    private router         = inject(Router);
+    private router = inject(Router);
     private messageService = inject(MessageService);
+    readonly frontendUrl = environment.frontendUrl;
 
     pages = signal<Page[]>([]);
     activeTab = signal<string>('');
@@ -123,13 +127,17 @@ export class ContentGeneralGrid implements OnInit {
 
     private checkRedirectToast(): void {
         const toastData = history.state?.toast;
-        
+
         if (toastData) {
             // Se usa setTimeout para asegurar que PrimeNG inicialice el <p-toast /> en el DOM
             setTimeout(() => {
                 this.messageService.add(toastData);
             }, 0);
         }
+    }
+    getPageUrl(slug: string): string {
+        const mappedRoute = PAGE_SLUG_MAP[slug] ?? slug;
+        return mappedRoute ? `${this.frontendUrl}/${mappedRoute}` : `${this.frontendUrl}/`;
     }
 
     loadPages(): void {
