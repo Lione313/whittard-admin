@@ -30,7 +30,10 @@ export class ApiService {
         return this.http.delete<T>(`${this.baseUrl}/${path}`, body !== undefined ? { body } : undefined);
     }
 
-    
+    patch<T>(path: string, body: unknown = {}): Observable<T> {
+        return this.http.patch<T>(`${this.baseUrl}/${path}`, body);
+    }
+
     postForm<T>(path: string, formData: FormData): Observable<T> {
         return this.http.post<T>(`${this.baseUrl}/${path}`, formData);
     }

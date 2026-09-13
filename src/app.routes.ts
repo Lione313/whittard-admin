@@ -35,6 +35,10 @@ export const appRoutes: Routes = [
             { path: 'inventory', loadChildren: () => import('./app/pages/inventory/inventory.routes').then((m) => m.default) },
             { path: 'reviews', loadChildren: () => import('./app/pages/reviews/reviews.routes').then((m) => m.default) },
             { path: 'taxes', loadChildren: () => import('./app/pages/taxes/taxes.routes').then((m) => m.default) },
+            { 
+                path: 'configuration', 
+                loadChildren: () => import('./app/pages/configuration/configuration.routes').then((m) => m.default) 
+            },
             { path: 'documentation', component: Documentation },
             { path: 'pages', loadChildren: () => import('./app/pages/pages.routes').then((m) => m.default) }
         ]
