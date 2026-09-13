@@ -15,14 +15,25 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 
 import { CategoryService } from '@/app/features/products/services/category.service';
-import { Category, CategoryPayload } from '@/app/features/products/models/category.model';
+import { Category } from '@/app/features/products/models/category.model';
 import { ConfirmDialogComponent } from '@/app/shared/components/confirm-dialog/confirm-dialog';
+import { MediaPickerComponent } from '@/app/shared/components/media-picker/media-picker';
 import { formatApiError } from '@/app/shared/utils/api-error';
+
+interface CategoryImageAcceptance {
+    extensions: string[];
+    maxBytes: number;
+}
+
+const CATEGORY_IMAGE_ACCEPTANCE: CategoryImageAcceptance = {
+    extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'avif'],
+    maxBytes: 10 * 1024 * 1024
+};
 
 @Component({
     selector: 'app-category-list',
     standalone: true,
-    imports: [FormsModule, ButtonModule, RippleModule, ToastModule, DialogModule, InputTextModule, SelectModule, TreeTableModule, ToolbarModule, MessageModule, IconFieldModule, InputIconModule, ConfirmDialogComponent],
+    imports: [FormsModule, ButtonModule, RippleModule, ToastModule, DialogModule, InputTextModule, SelectModule, TreeTableModule, ToolbarModule, MessageModule, IconFieldModule, InputIconModule, MediaPickerComponent, ConfirmDialogComponent],
     providers: [MessageService, ConfirmationService],
     template: `
         <p-toolbar styleClass="mb-6">
@@ -58,6 +69,9 @@ import { formatApiError } from '@/app/shared/utils/api-error';
                     <tr [ttRow]="rowNode">
                         <td>
                             <p-treeTableToggler [rowNode]="rowNode" />
+                            @if (rowData.image_url) {
+                                <img [src]="rowData.image_url" alt="Imagen de {{ rowData.name }}" class="w-8 h-8 rounded-md object-cover align-middle mr-2" loading="lazy" />
+                            }
                             <span class="font-medium">{{ rowData.name }}</span>
                             @if (rowData.children_count > 0) {
                                 <span class="inline-flex items-center px-2 py-0.5 ml-2 text-xs rounded-full bg-surface-100 dark:bg-surface-700 text-surface-500 dark:text-surface-300">{{ rowData.children_count }} sub</span>
@@ -102,6 +116,19 @@ import { formatApiError } from '@/app/shared/utils/api-error';
                     <div>
                         <label class="block font-medium mb-2">Slug</label>
                         <input pInputText [(ngModel)]="form.slug" class="w-full" placeholder="Se genera automáticamente si se omite" />
+                    </div>
+                    <div>
+                        <label class="block font-medium mb-2">Imagen <span class="text-muted-color font-normal">(opcional)</span></label>
+                        <app-media-picker
+                            [url]="form.image_url"
+                            [file]="imageFile()"
+                            [kind]="'image'"
+                            [accept]="imageAcceptance.extensions"
+                            [maxSize]="imageAcceptance.maxBytes"
+                            (fileChange)="imageFile.set($event)"
+                            (urlChange)="form.image_url = $event"
+                        />
+                        <small class="text-muted-color block mt-1">Se muestra en el carrusel de categorías de las landings.</small>
                     </div>
 
                     @if (isEditingSubcategory()) {
@@ -161,6 +188,9 @@ export class CategoryList implements OnInit {
     submitted = false;
     editingId = signal<string | null>(null);
     parentId = signal<string | null>(null);
+    imageFile = signal<File | null>(null);
+
+    readonly imageAcceptance = CATEGORY_IMAGE_ACCEPTANCE;
 
     isEditingSubcategory = computed(() => {
         const id = this.editingId();
@@ -172,7 +202,8 @@ export class CategoryList implements OnInit {
         id: null as string | null,
         name: '',
         slug: '',
-        parent_id: null as string | null
+        parent_id: null as string | null,
+        image_url: null as string | null
     };
 
     treeNodes = signal<TreeNode[]>([]);
@@ -247,9 +278,10 @@ export class CategoryList implements OnInit {
     }
 
     openNew(parentId: string | null = null) {
-        this.form = { id: null, name: '', slug: '', parent_id: parentId };
+        this.form = { id: null, name: '', slug: '', parent_id: parentId, image_url: null };
         this.parentId.set(parentId);
         this.editingId.set(null);
+        this.imageFile.set(null);
         this.submitted = false;
         this.dialogVisible.set(true);
     }
@@ -259,10 +291,12 @@ export class CategoryList implements OnInit {
             id: category.id,
             name: category.name,
             slug: category.slug,
-            parent_id: category.parent?.id ?? null
+            parent_id: category.parent?.id ?? null,
+            image_url: category.image_url ?? null
         };
         this.parentId.set(category.parent?.id ?? null);
         this.editingId.set(category.id);
+        this.imageFile.set(null);
         this.submitted = false;
         this.dialogVisible.set(true);
     }
@@ -298,13 +332,22 @@ export class CategoryList implements OnInit {
         }
 
         this.saving.set(true);
-        const payload: CategoryPayload = {
-            name: this.form.name.trim(),
-            slug: this.form.slug?.trim() || undefined,
-            parent_id: this.form.parent_id
-        };
+        const form = new FormData();
 
-        const action = this.form.id ? this.categoryService.update(this.form.id, payload) : this.categoryService.create(payload);
+        form.append('name', this.form.name.trim());
+        form.append('parent_id', this.form.parent_id ?? '');
+
+        if (this.form.slug?.trim()) form.append('slug', this.form.slug.trim());
+
+        const imageFile = this.imageFile();
+
+        if (imageFile) {
+            form.append('image', imageFile, imageFile.name);
+        } else {
+            form.append('image_url', this.form.image_url?.trim() || '');
+        }
+
+        const action = this.form.id ? this.categoryService.update(this.form.id, form) : this.categoryService.create(form);
 
         action.subscribe({
             next: (res) => {

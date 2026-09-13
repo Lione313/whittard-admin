@@ -16,12 +16,12 @@ export class CategoryService {
         return this.api.get(`v1/admin/categories/${id}`);
     }
 
-    create(payload: unknown): Observable<ApiResponse<Category>> {
-        return this.api.post('v1/admin/categories', payload);
+    create(form: FormData): Observable<ApiResponse<Category>> {
+        return this.api.postForm('v1/admin/categories', form);
     }
 
-    update(id: string, payload: unknown): Observable<ApiResponse<Category>> {
-        return this.api.put(`v1/admin/categories/${id}`, payload);
+    update(id: string, form: FormData): Observable<ApiResponse<Category>> {
+        return this.api.putForm(`v1/admin/categories/${id}`, form);
     }
 
     remove(id: string): Observable<ApiResponse<null>> {
