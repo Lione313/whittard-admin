@@ -6,11 +6,31 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { PageSection } from '../../../models/content.model';
 
-interface PhoneItem { id: number; label: string; value: string; }
-interface EmailItem { id: number; label: string; value: string; }
-interface OfficeItem { id: number; title: string; address: string; }
-interface ScheduleItem { id: number; label: string; value: string; }
-interface PaymentItem { id: string; key: string; sort_order: number; }
+interface PhoneItem {
+    id: number;
+    label: string;
+    value: string;
+}
+interface EmailItem {
+    id: number;
+    label: string;
+    value: string;
+}
+interface OfficeItem {
+    id: number;
+    title: string;
+    address: string;
+}
+interface ScheduleItem {
+    id: number;
+    label: string;
+    value: string;
+}
+interface PaymentItem {
+    id: string;
+    key: string;
+    sort_order: number;
+}
 
 export interface FooterInfoContent extends Record<string, unknown> {
     is_visible: boolean;
@@ -167,17 +187,33 @@ export class FooterInfoEditor implements OnInit {
         }
     }
 
-    addPhone() { if (this.content.phones.length < 3) this.content.phones.push({ id: Date.now(), label: '', value: '' }); }
-    removePhone(i: number) { this.content.phones.splice(i, 1); }
+    addPhone() {
+        if (this.content.phones.length < 3) this.content.phones.push({ id: Date.now(), label: '', value: '' });
+    }
+    removePhone(i: number) {
+        this.content.phones.splice(i, 1);
+    }
 
-    addEmail() { if (this.content.emails.length < 3) this.content.emails.push({ id: Date.now(), label: '', value: '' }); }
-    removeEmail(i: number) { this.content.emails.splice(i, 1); }
+    addEmail() {
+        if (this.content.emails.length < 3) this.content.emails.push({ id: Date.now(), label: '', value: '' });
+    }
+    removeEmail(i: number) {
+        this.content.emails.splice(i, 1);
+    }
 
-    addOffice() { if (this.content.offices.length < 3) this.content.offices.push({ id: Date.now(), title: '', address: '' }); }
-    removeOffice(i: number) { this.content.offices.splice(i, 1); }
+    addOffice() {
+        if (this.content.offices.length < 3) this.content.offices.push({ id: Date.now(), title: '', address: '' });
+    }
+    removeOffice(i: number) {
+        this.content.offices.splice(i, 1);
+    }
 
-    addSchedule() { if (this.content.schedules.length < 3) this.content.schedules.push({ id: Date.now(), label: '', value: '' }); }
-    removeSchedule(i: number) { this.content.schedules.splice(i, 1); }
+    addSchedule() {
+        if (this.content.schedules.length < 3) this.content.schedules.push({ id: Date.now(), label: '', value: '' });
+    }
+    removeSchedule(i: number) {
+        this.content.schedules.splice(i, 1);
+    }
 
     movePayment(index: number, direction: number) {
         const target = index + direction;
@@ -185,7 +221,7 @@ export class FooterInfoEditor implements OnInit {
         const temp = this.content.payment_methods[index];
         this.content.payment_methods[index] = this.content.payment_methods[target];
         this.content.payment_methods[target] = temp;
-        this.content.payment_methods.forEach((item, idx) => item.sort_order = idx + 1);
+        this.content.payment_methods.forEach((item, idx) => (item.sort_order = idx + 1));
     }
 
     onSave(): void {

@@ -493,6 +493,61 @@ export class ProductFormStore {
         this.markDirty();
     }
 
+    /**
+     * Genera la matriz de variantes (producto cartesiano) a partir de los
+     * atributos seleccionados. Conserva precio/stock/media de las variantes que
+     * ya existían con la misma combinación y crea las que falten.
+     */
+    generateVariantMatrix() {
+        const attributes = this.selectedAttributes().filter((attribute) => attribute.options.length > 0);
+
+        if (attributes.length === 0) {
+            this.messageService.add({ severity: 'warn', summary: 'Atributos', detail: 'Selecciona al menos un atributo con valores para generar la matriz.', life: 4000 });
+
+            return;
+        }
+
+        const types = attributes.map((attribute) => attribute.type);
+        const combinations = attributes.reduce<Record<string, string>[]>((acc, attribute) => acc.flatMap((combo) => attribute.options.map((option) => ({ ...combo, [attribute.type]: option.value }))), [{}]);
+
+        const existingByKey = new Map(this.variants().map((variant) => [this.variantKey(variant.attributes, types), variant]));
+
+        const generated = combinations.map((attributeMap) => {
+            const match = existingByKey.get(this.variantKey(attributeMap, types));
+
+            if (match) return { ...match, attributes: attributeMap };
+
+            return {
+                uid: this.nextUid(),
+                sku: '',
+                price: null,
+                sale_price: null,
+                sale_price_starts_at: null,
+                sale_price_ends_at: null,
+                has_sale: false,
+                sale_starts_at_date: null,
+                sale_ends_at_date: null,
+                stock: 0,
+                is_primary: false,
+                is_active: true,
+                attributes: attributeMap,
+                media: []
+            } satisfies VariantDraft;
+        });
+
+        if (generated.length > 0 && !generated.some((variant) => variant.is_primary)) {
+            generated[0].is_primary = true;
+        }
+
+        this.variants.set(generated);
+        this.markDirty();
+        this.messageService.add({ severity: 'success', summary: 'Matriz generada', detail: `${generated.length} variante(s) para ${types.length} atributo(s).`, life: 3000 });
+    }
+
+    private variantKey(attributes: Record<string, string>, types: string[]): string {
+        return types.map((type) => attributes[type] ?? '').join('|');
+    }
+
     editVariant(variant: VariantDraft) {
         this.variantFormError.set(null);
         this.editingVariant.set({

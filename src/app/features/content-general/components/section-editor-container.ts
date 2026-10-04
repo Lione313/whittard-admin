@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, ViewContainerRef, ComponentRef, effect } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewContainerRef, ComponentRef, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ContentService } from '../services/content.service';
@@ -20,9 +20,7 @@ import { EditorNotFoundComponent } from '@/app/shared/components/conten-general/
         <div class="p-6">
             <p-toast />
 
-            <button pButton icon="pi pi-arrow-left" label="Volver"
-                class="p-button-text p-button-plain mb-4 p-0" (click)="goBack()">
-            </button>
+            <button pButton icon="pi pi-arrow-left" label="Volver" class="p-button-text p-button-plain mb-4 p-0" (click)="goBack()"></button>
 
             @if (section(); as s) {
                 <div class="mb-6">
@@ -30,9 +28,9 @@ import { EditorNotFoundComponent } from '@/app/shared/components/conten-general/
                     <p class="text-gray-500 text-sm">Editando sección de la página "{{ pageSlug() }}"</p>
                 </div>
 
-                @if (editorFound()) {
-                    <ng-container #editorHost />
-                } @else {
+                <ng-container #editorHost />
+
+                @if (!editorFound()) {
                     <app-editor-not-found [sectionType]="s.type" />
                 }
             } @else {
@@ -45,76 +43,83 @@ import { EditorNotFoundComponent } from '@/app/shared/components/conten-general/
         </div>
     `
 })
-export class SectionEditorContainer implements OnInit {
-    private route          = inject(ActivatedRoute);
-    private router         = inject(Router);
-    private location       = inject(Location);
+export class SectionEditorContainer implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private location = inject(Location);
     private contentService = inject(ContentService);
     private messageService = inject(MessageService);
-    private vcr            = inject(ViewContainerRef);
 
-    section     = signal<PageSection | null>(null);
-    pageSlug    = signal<string>('');
-    isSaving    = signal<boolean>(false);
+    private editorHost = viewChild('editorHost', { read: ViewContainerRef });
+
+    section = signal<PageSection | null>(null);
+    pageSlug = signal<string>('');
+    isSaving = signal<boolean>(false);
     editorFound = signal<boolean>(true);
 
-    private editorRef: ComponentRef<any> | null = null;
+    private editorRef: ComponentRef<unknown> | null = null;
 
     constructor() {
-        // Cada vez que section cambia → monta el editor correcto
+        // Cuando la sección (y su host en el template) están listos → monta el editor.
         effect(() => {
             const s = this.section();
-            if (!s) return;
-            this.mountEditor(s);
+            const host = this.editorHost();
+
+            if (!s || !host) return;
+            this.mountEditor(s, host);
         });
     }
 
     ngOnInit(): void {
-        const slug       = this.route.snapshot.paramMap.get('slug')       || '';
+        const slug = this.route.snapshot.paramMap.get('slug') || '';
         const identifier = this.route.snapshot.paramMap.get('identifier') || '';
-        const id         = Number(this.route.snapshot.paramMap.get('id'));
+        const id = Number(this.route.snapshot.paramMap.get('id'));
 
         this.pageSlug.set(slug);
         if (slug && identifier && id) this.loadSection(slug, identifier, id);
     }
 
-    private mountEditor(section: PageSection): void {
-    console.log('Sección recibida:', section); // Revisa en la consola del navegador qué valor exacto tienen type e identifier
-
-    // Intentamos buscar por type o por identifier por si acaso difieren en BD
-    const editorType = EDITOR_REGISTRY[section.type] || EDITOR_REGISTRY[section.identifier];
-
-    if (!editorType) {
-        this.editorFound.set(false);
-        return;
+    ngOnDestroy(): void {
+        this.editorRef?.destroy();
     }
 
-    this.editorFound.set(true);
+    private mountEditor(section: PageSection, host: ViewContainerRef): void {
+        // Intentamos buscar por type o por identifier por si acaso difieren en BD
+        const editorType = EDITOR_REGISTRY[section.type] || EDITOR_REGISTRY[section.identifier];
 
-    setTimeout(() => {
+        this.editorFound.set(!!editorType);
+
+        if (!editorType) return;
+
+        // Montamos dentro del host del template (queda dentro de la tarjeta/contenedor).
         this.editorRef?.destroy();
-        this.editorRef = this.vcr.createComponent(editorType);
+        this.editorRef = host.createComponent(editorType);
 
-        const instance = this.editorRef.instance as any;
-        instance.section  = section;
-        instance.loading  = this.isSaving();
-        instance.save?.subscribe?.((payload: FormData | Record<string, unknown>) => {
+        this.editorRef.setInput('section', section);
+        this.editorRef.setInput(
+            'loading',
+            untracked(() => this.isSaving())
+        );
+
+        const instance = this.editorRef.instance as { save?: { subscribe?: (fn: (payload: FormData | Record<string, unknown>) => void) => void } };
+
+        instance.save?.subscribe?.((payload) => {
             this.onSave(payload);
         });
 
         this.editorRef.changeDetectorRef.detectChanges();
-    }, 0);
-}
+    }
 
     loadSection(slug: string, identifier: string, id: number): void {
         this.contentService.getSection(slug, identifier, id).subscribe({
-            next:  (data) => this.section.set(data),
-            error: ()     => this.messageService.add({
-                severity: 'error',
-                summary:  'Error',
-                detail:   'No se pudo cargar la sección.',
-                life:     4000
-            })
+            next: (data) => this.section.set(data),
+            error: () =>
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'No se pudo cargar la sección.',
+                    life: 4000
+                })
         });
     }
 
@@ -124,44 +129,43 @@ export class SectionEditorContainer implements OnInit {
 
     onSave(content: Record<string, unknown> | FormData): void {
         const s = this.section();
+
         if (!s || this.isSaving()) return;
 
         this.isSaving.set(true);
-        if (this.editorRef) this.editorRef.instance.loading = true;
+        this.editorRef?.setInput('loading', true);
 
-        const slug       = this.pageSlug();
+        const slug = this.pageSlug();
         const identifier = s.identifier;
-        const id         = s.id;
+        const id = s.id;
 
-        const call = content instanceof FormData
-            ? this.contentService.updateSectionForm(slug, identifier, id, content)
-            : this.contentService.updateSection(slug, identifier, id, content);
+        const call = content instanceof FormData ? this.contentService.updateSectionForm(slug, identifier, id, content) : this.contentService.updateSection(slug, identifier, id, content);
 
         call.subscribe({
             next: () => {
                 this.isSaving.set(false);
-                if (this.editorRef) this.editorRef.instance.loading = false;
+                this.editorRef?.setInput('loading', false);
 
                 this.router.navigate(['/content-general'], {
                     state: {
                         toast: {
                             severity: 'success',
-                            summary:  'Sección Actualizada',
-                            detail:   `"${s.name}" actualizada correctamente.`,
-                            life:     4000
+                            summary: 'Sección Actualizada',
+                            detail: `"${s.name}" actualizada correctamente.`,
+                            life: 4000
                         }
                     }
                 });
             },
             error: (err) => {
                 this.isSaving.set(false);
-                if (this.editorRef) this.editorRef.instance.loading = false;
+                this.editorRef?.setInput('loading', false);
 
                 this.messageService.add({
                     severity: 'error',
-                    summary:  'Error',
-                    detail:   err?.error?.message || 'Error al actualizar la sección.',
-                    life:     5000
+                    summary: 'Error',
+                    detail: err?.error?.message || 'Error al actualizar la sección.',
+                    life: 5000
                 });
             }
         });

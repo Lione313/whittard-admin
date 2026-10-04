@@ -33,20 +33,15 @@ export interface LogoContent extends Record<string, unknown> {
                     <p-button label="Guardar Cambios" icon="pi pi-check" [loading]="loading" (onClick)="onSave()" />
                 </div>
             </div>
-            
+
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-5">
-                    <app-image-upload
-                        label="Archivo del Logo (PNG, SVG o WebP)"
-                        accept="image/png, image/svg+xml, image/webp"
-                        [initialUrl]="getInitialUrl()"
-                        (onFileSelected)="onImageSelected($event)" />
+                    <app-image-upload label="Archivo del Logo (PNG, SVG o WebP)" accept="image/png, image/svg+xml, image/webp" [initialUrl]="getInitialUrl()" (onFileSelected)="onImageSelected($event)" />
                 </div>
 
                 <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-5">
                     <label class="block text-sm font-semibold mb-2 text-surface-700 dark:text-surface-300">Texto alternativo (alt)</label>
-                    <input pInputText type="text" [(ngModel)]="content.alt"
-                        placeholder="Ej: Whittard Chelsea 1886" class="w-full" />
+                    <input pInputText type="text" [(ngModel)]="content.alt" placeholder="Ej: Whittard Chelsea 1886" class="w-full" />
                     <p class="text-xs text-surface-400 mt-1">Usado por lectores de pantalla y SEO.</p>
                 </div>
             </div>
@@ -57,7 +52,7 @@ export class LogoEditor implements OnInit {
     @Input({ required: true }) section!: PageSection;
     @Input() loading = false;
     @Output() save = new EventEmitter<FormData | Record<string, unknown>>();
-    
+
     content: LogoContent = { is_visible: true, src: null, alt: '' };
     private classUrlPipe = new ClassUrlPipe();
 
@@ -77,8 +72,7 @@ export class LogoEditor implements OnInit {
     }
 
     getInitialUrl(): string | null {
-        if (typeof this.content.src === 'string' && this.content.src)
-            return this.classUrlPipe.transform(this.content.src);
+        if (typeof this.content.src === 'string' && this.content.src) return this.classUrlPipe.transform(this.content.src);
         return null;
     }
 

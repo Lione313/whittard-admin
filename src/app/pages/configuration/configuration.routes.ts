@@ -12,9 +12,14 @@ export default [
         loadChildren: () => import('./whatsapp/whatsapp.routes').then((m) => m.default)
     },
     {
-        path: 'tiendas-fisicas',
-        data: { breadcrumb: 'Tiendas Físicas' },
-        loadChildren: () => import('./physical-stores/physical-stores.routes').then((m) => m.default)
+        path: 'chatbot',
+        data: { breadcrumb: 'Chatbot' },
+        loadChildren: () => import('./chatbot/chatbot.routes').then((m) => m.default)
+    },
+    {
+        path: 'recojo-en-tienda',
+        data: { breadcrumb: 'Recojo en Tienda' },
+        loadChildren: () => import('./pickup-stores/pickup-stores.routes').then((m) => m.default)
     },
     {
         path: 'zonas-delivery',
@@ -24,6 +29,11 @@ export default [
     {
         path: 'scripts',
         loadChildren: () => import('@/app/pages/configuration/scripts/routes/scripts.routes')
+    },
+    {
+        path: 'seo-paginas',
+        data: { breadcrumb: 'SEO de Páginas' },
+        loadChildren: () => import('./seo-paginas/seo-paginas.routes').then((m) => m.default)
     },
     { path: '', redirectTo: 'cuentas-bancarias', pathMatch: 'full' }
 ] as Routes;

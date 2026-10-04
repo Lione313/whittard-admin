@@ -25,11 +25,7 @@ export interface BannerSplitContent extends Record<string, unknown> {
 @Component({
     selector: 'app-banner-split-editor',
     standalone: true,
-    imports: [
-        CommonModule, FormsModule, ButtonModule, InputTextModule,
-        TextareaModule, ToggleSwitchModule, SelectButtonModule,
-        DividerModule, ImageUploadComponent 
-    ],
+    imports: [CommonModule, FormsModule, ButtonModule, InputTextModule, TextareaModule, ToggleSwitchModule, SelectButtonModule, DividerModule, ImageUploadComponent],
     template: `
         <div class="space-y-6">
             <!-- HEADER -->
@@ -48,20 +44,12 @@ export interface BannerSplitContent extends Record<string, unknown> {
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
                 <!-- COLUMNA IZQUIERDA: IMAGEN + LAYOUT -->
                 <div class="flex flex-col gap-4">
                     <!-- LAYOUT SELECTOR -->
                     <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
-                        <label class="block text-sm font-semibold mb-3 text-surface-700 dark:text-surface-300">
-                            <i class="pi pi-arrows-h mr-2 text-primary"></i>Disposición
-                        </label>
-                        <p-select-button
-                            [(ngModel)]="content.layout"
-                            [options]="layoutOptions"
-                            optionLabel="label"
-                            optionValue="value"
-                            class="w-full">
+                        <label class="block text-sm font-semibold mb-3 text-surface-700 dark:text-surface-300"> <i class="pi pi-arrows-h mr-2 text-primary"></i>Disposición </label>
+                        <p-select-button [(ngModel)]="content.layout" [options]="layoutOptions" optionLabel="label" optionValue="value" class="w-full">
                             <ng-template #item let-opt>
                                 <div class="flex items-center gap-2 px-1">
                                     <i [class]="opt.icon"></i>
@@ -84,37 +72,25 @@ export interface BannerSplitContent extends Record<string, unknown> {
 
                     <!-- IMAGEN -->
                     <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
-                        <label class="block text-sm font-semibold mb-3 text-surface-700 dark:text-surface-300">
-                            <i class="pi pi-image mr-2 text-primary"></i>Imagen del Banner
-                        </label>
+                        <label class="block text-sm font-semibold mb-3 text-surface-700 dark:text-surface-300"> <i class="pi pi-image mr-2 text-primary"></i>Imagen del Banner </label>
                         @if (mountImage) {
-                            <app-image-upload
-                                label="Recomendado: 800×500px"
-                                [initialUrl]="getInitialImageUrl()"
-                                (onFileSelected)="onImageSelected($event)" />
+                            <app-image-upload label="Recomendado: 800×500px" [initialUrl]="getInitialImageUrl()" (onFileSelected)="onImageSelected($event)" />
                         }
                     </div>
                 </div>
 
                 <!-- COLUMNA DERECHA: CAMPOS DE TEXTO -->
                 <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4 flex flex-col gap-4">
-                    <p class="text-sm font-semibold text-surface-700 dark:text-surface-300">
-                        <i class="pi pi-align-left mr-2 text-primary"></i>Contenido de Texto
-                    </p>
+                    <p class="text-sm font-semibold text-surface-700 dark:text-surface-300"><i class="pi pi-align-left mr-2 text-primary"></i>Contenido de Texto</p>
 
                     <div>
                         <label class="block text-xs font-semibold mb-1 text-surface-600 dark:text-surface-400">Título</label>
-                        <input pInputText type="text" [(ngModel)]="content.title"
-                            placeholder="Ej: Discover NEW Summer Favourites"
-                            class="w-full" />
+                        <input pInputText type="text" [(ngModel)]="content.title" placeholder="Ej: Discover NEW Summer Favourites" class="w-full" />
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold mb-1 text-surface-600 dark:text-surface-400">Subtítulo / Descripción</label>
-                        <textarea pTextarea [(ngModel)]="content.subtitle"
-                            placeholder="Ej: From calming infusions and refreshing instant teas..."
-                            [rows]="4"
-                            class="w-full resize-none"></textarea>
+                        <textarea pTextarea [(ngModel)]="content.subtitle" placeholder="Ej: From calming infusions and refreshing instant teas..." [rows]="4" class="w-full resize-none"></textarea>
                     </div>
 
                     <p-divider />
@@ -124,15 +100,11 @@ export interface BannerSplitContent extends Record<string, unknown> {
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-semibold mb-1 text-surface-600 dark:text-surface-400">Texto del Botón</label>
-                            <input pInputText type="text" [(ngModel)]="content.button_text"
-                                placeholder="Ej: Shop Now"
-                                class="w-full" />
+                            <input pInputText type="text" [(ngModel)]="content.button_text" placeholder="Ej: Shop Now" class="w-full" />
                         </div>
                         <div>
                             <label class="block text-xs font-semibold mb-1 text-surface-600 dark:text-surface-400">URL del Botón</label>
-                            <input pInputText type="text" [(ngModel)]="content.button_url"
-                                placeholder="Ej: /category/summer"
-                                class="w-full" />
+                            <input pInputText type="text" [(ngModel)]="content.button_url" placeholder="Ej: /category/summer" class="w-full" />
                         </div>
                     </div>
                 </div>
@@ -141,11 +113,8 @@ export interface BannerSplitContent extends Record<string, unknown> {
             <!-- PREVIEW DEL BANNER -->
             @if (hasPreview()) {
                 <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
-                    <p class="text-sm font-semibold mb-3 text-surface-700 dark:text-surface-300">
-                        <i class="pi pi-eye mr-2 text-primary"></i>Vista Previa
-                    </p>
-                    <div class="flex rounded-lg overflow-hidden border border-surface-200 dark:border-surface-700 min-h-32"
-                         [class.flex-row-reverse]="content.layout === 'image_right'">
+                    <p class="text-sm font-semibold mb-3 text-surface-700 dark:text-surface-300"><i class="pi pi-eye mr-2 text-primary"></i>Vista Previa</p>
+                    <div class="flex rounded-lg overflow-hidden border border-surface-200 dark:border-surface-700 min-h-32" [class.flex-row-reverse]="content.layout === 'image_right'">
                         <!-- IMAGEN -->
                         <div class="w-1/2 bg-surface-100 dark:bg-surface-800 overflow-hidden">
                             @if (getPreviewUrl()) {
@@ -197,8 +166,8 @@ export class BannerSplitEditor implements OnInit {
     };
 
     layoutOptions = [
-        { label: 'Imagen izquierda', value: 'image_left',  icon: 'pi pi-align-left' },
-        { label: 'Imagen derecha',   value: 'image_right', icon: 'pi pi-align-right' }
+        { label: 'Imagen izquierda', value: 'image_left', icon: 'pi pi-align-left' },
+        { label: 'Imagen derecha', value: 'image_right', icon: 'pi pi-align-right' }
     ];
 
     private classUrlPipe = new ClassUrlPipe();
@@ -207,13 +176,13 @@ export class BannerSplitEditor implements OnInit {
         const raw = this.section?.content_data?.content as BannerSplitContent | undefined;
         if (raw) {
             this.content = {
-                is_visible:    raw.is_visible   ?? true,
-                layout:        raw.layout        ?? 'image_left',
-                image:         raw.image         ?? null,
-                title:         raw.title         ?? '',
-                subtitle:      raw.subtitle      ?? '',
-                button_text:   raw.button_text   ?? '',
-                button_url:    raw.button_url    ?? '',
+                is_visible: raw.is_visible ?? true,
+                layout: raw.layout ?? 'image_left',
+                image: raw.image ?? null,
+                title: raw.title ?? '',
+                subtitle: raw.subtitle ?? '',
+                button_text: raw.button_text ?? '',
+                button_url: raw.button_url ?? '',
                 preview_image: null
             };
         }
@@ -233,15 +202,13 @@ export class BannerSplitEditor implements OnInit {
     }
 
     getInitialImageUrl(): string | null {
-        if (typeof this.content.image === 'string' && this.content.image)
-            return this.classUrlPipe.transform(this.content.image);
+        if (typeof this.content.image === 'string' && this.content.image) return this.classUrlPipe.transform(this.content.image);
         return null;
     }
 
     getPreviewUrl(): string | null {
         if (this.content.preview_image) return this.content.preview_image;
-        if (typeof this.content.image === 'string' && this.content.image)
-            return this.classUrlPipe.transform(this.content.image);
+        if (typeof this.content.image === 'string' && this.content.image) return this.classUrlPipe.transform(this.content.image);
         return null;
     }
 
@@ -252,23 +219,23 @@ export class BannerSplitEditor implements OnInit {
     onSave(): void {
         if (this.content.image instanceof File) {
             const fd = new FormData();
-            fd.append('content[is_visible]',  this.content.is_visible ? '1' : '0');
-            fd.append('content[layout]',       this.content.layout);
-            fd.append('content[title]',        this.content.title || '');
-            fd.append('content[subtitle]',     this.content.subtitle || '');
-            fd.append('content[button_text]',  this.content.button_text || '');
-            fd.append('content[button_url]',   this.content.button_url || '');
-            fd.append('content[image]',        this.content.image);
+            fd.append('content[is_visible]', this.content.is_visible ? '1' : '0');
+            fd.append('content[layout]', this.content.layout);
+            fd.append('content[title]', this.content.title || '');
+            fd.append('content[subtitle]', this.content.subtitle || '');
+            fd.append('content[button_text]', this.content.button_text || '');
+            fd.append('content[button_url]', this.content.button_url || '');
+            fd.append('content[image]', this.content.image);
             this.save.emit(fd);
         } else {
             this.save.emit({
-                is_visible:  this.content.is_visible,
-                layout:      this.content.layout,
-                image:       this.content.image,
-                title:       this.content.title,
-                subtitle:    this.content.subtitle,
+                is_visible: this.content.is_visible,
+                layout: this.content.layout,
+                image: this.content.image,
+                title: this.content.title,
+                subtitle: this.content.subtitle,
                 button_text: this.content.button_text,
-                button_url:  this.content.button_url
+                button_url: this.content.button_url
             });
         }
     }

@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -108,7 +108,10 @@ import { CurrencyFormatPipe } from '@/app/shared/pipes/currency-format.pipe';
                     </ng-template>
                 </p-table>
                 @if (productType() !== 'simple' || variants().length === 0) {
-                    <div class="flex items-center justify-center py-3 border-t border-surface-100 dark:border-surface-800">
+                    <div class="flex items-center justify-center gap-2 py-3 border-t border-surface-100 dark:border-surface-800">
+                        @if (canGenerateMatrix()) {
+                            <p-button label="Generar matriz" icon="pi pi-sitemap" [outlined]="true" severity="primary" (onClick)="generateMatrix.emit()" />
+                        }
                         <p-button label="Agregar variante" icon="pi pi-plus" [outlined]="true" severity="secondary" (onClick)="addVariant.emit()" />
                     </div>
                 }
@@ -122,6 +125,7 @@ export class VariantsPanel {
     selectedAttributes = input.required<Attribute[]>();
 
     addVariant = output<void>();
+    generateMatrix = output<void>();
     editVariant = output<VariantDraft>();
     setVariantPrimary = output<{ variant: VariantDraft; checked: boolean }>();
     toggleVariantActive = output<{ variant: VariantDraft; active: boolean }>();
@@ -129,6 +133,8 @@ export class VariantsPanel {
     removeVariant = output<number>();
 
     readonly totalCols = 6;
+
+    canGenerateMatrix = computed(() => this.productType() === 'variable' && this.selectedAttributes().some((attribute) => attribute.options.length > 0));
 
     variantAttributeChips(variant: VariantDraft): { type: string; label: string; value: string }[] {
         const attrs = this.selectedAttributes();

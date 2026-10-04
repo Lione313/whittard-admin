@@ -35,13 +35,16 @@ export const appRoutes: Routes = [
                 loadChildren: () => import('./app/pages/megamenu/megamenu.routes').then((m) => m.default)
             },
             { path: 'customers', loadChildren: () => import('./app/pages/customers/customers.routes').then((m) => m.default) },
+            { path: 'orders', loadChildren: () => import('./app/pages/orders/orders.routes').then((m) => m.default) },
+            { path: 'recipes', loadChildren: () => import('./app/pages/recipes/recipes.routes').then((m) => m.default) },
+            { path: 'recipe-carousel', loadChildren: () => import('./app/pages/recipe-carousel/recipe-carousel.routes').then((m) => m.default) },
             { path: 'coupons', loadChildren: () => import('./app/pages/coupons/coupons.routes').then((m) => m.default) },
             { path: 'inventory', loadChildren: () => import('./app/pages/inventory/inventory.routes').then((m) => m.default) },
             { path: 'reviews', loadChildren: () => import('./app/pages/reviews/reviews.routes').then((m) => m.default) },
             { path: 'taxes', loadChildren: () => import('./app/pages/taxes/taxes.routes').then((m) => m.default) },
-            { 
-                path: 'configuration', 
-                loadChildren: () => import('./app/pages/configuration/configuration.routes').then((m) => m.default) 
+            {
+                path: 'configuration',
+                loadChildren: () => import('./app/pages/configuration/configuration.routes').then((m) => m.default)
             },
             { path: 'documentation', component: Documentation },
             { path: 'pages', loadChildren: () => import('./app/pages/pages.routes').then((m) => m.default) }

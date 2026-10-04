@@ -13,15 +13,11 @@ export class ContentService {
     private readonly basePath = 'v1/admin/content';
 
     getPages(): Observable<Page[]> {
-        return this.api
-            .get<{ success: boolean; data: Page[] }>(`${this.basePath}/pages`)
-            .pipe(map((res) => res.data));
+        return this.api.get<{ success: boolean; data: Page[] }>(`${this.basePath}/pages`).pipe(map((res) => res.data));
     }
 
     getSection(slug: string, identifier: string, id: number): Observable<PageSection> {
-        return this.api
-            .get<{ success: boolean; data: PageSection }>(`${this.basePath}/pages/${slug}/sections/${identifier}/${id}`)
-            .pipe(map((res) => res.data));
+        return this.api.get<{ success: boolean; data: PageSection }>(`${this.basePath}/pages/${slug}/sections/${identifier}/${id}`).pipe(map((res) => res.data));
     }
 
     // Solo JSON (sin archivos)

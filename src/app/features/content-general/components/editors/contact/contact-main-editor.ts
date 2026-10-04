@@ -11,15 +11,7 @@ import { ImageUploadComponent } from '@/app/shared/components/FileUpload/app-ima
 @Component({
     selector: 'app-contact-main-editor',
     standalone: true,
-    imports: [
-        CommonModule, 
-        FormsModule, 
-        ButtonModule, 
-        InputTextModule, 
-        ToggleSwitchModule, 
-        EditorModule, 
-        ImageUploadComponent
-    ],
+    imports: [CommonModule, FormsModule, ButtonModule, InputTextModule, ToggleSwitchModule, EditorModule, ImageUploadComponent],
     template: `
         <div class="space-y-6">
             <!-- Header -->
@@ -51,7 +43,7 @@ import { ImageUploadComponent } from '@/app/shared/components/FileUpload/app-ima
                 @for (card of content.cards; track $index) {
                     <div class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-xl p-5 space-y-4">
                         <div class="flex items-center justify-between border-b pb-3 border-surface-200 dark:border-surface-700">
-                          <span class="font-bold text-base text-primary flex items-center gap-2">
+                            <span class="font-bold text-base text-primary flex items-center gap-2">
                                 @if (card.type === 'whatsapp') {
                                     <i class="pi pi-whatsapp text-green-500 text-xl"></i>
                                     <span>Tarjeta 1: WhatsApp</span>
@@ -111,11 +103,7 @@ import { ImageUploadComponent } from '@/app/shared/components/FileUpload/app-ima
                         </div>
 
                         <div>
-                            <app-image-upload 
-                                label="Icono de la Tarjeta (Imagen o SVG)"
-                                [initialUrl]="card.icon_image"
-                                accept="image/png, image/jpeg, image/webp, image/svg+xml"
-                                (onFileSelected)="onCardImageSelected($event, card)" />
+                            <app-image-upload label="Icono de la Tarjeta (Imagen o SVG)" [initialUrl]="card.icon_image" accept="image/png, image/jpeg, image/webp, image/svg+xml" (onFileSelected)="onCardImageSelected($event, card)" />
                         </div>
                     </div>
                 }

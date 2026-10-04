@@ -70,6 +70,7 @@ import { SeoPanel } from '@/app/shared/components/seo-panel/seo-panel';
                         [variants]="store.variants()"
                         [selectedAttributes]="store.selectedAttributes()"
                         (addVariant)="store.addVariant()"
+                        (generateMatrix)="store.generateVariantMatrix()"
                         (editVariant)="store.editVariant($event)"
                         (setVariantPrimary)="store.setVariantPrimary($event.variant, $event.checked)"
                         (toggleVariantActive)="store.toggleVariantActive($event.variant, $event.active)"
